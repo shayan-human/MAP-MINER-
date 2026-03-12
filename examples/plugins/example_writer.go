@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shayan-human/map-miner-private/gmaps"
 	"github.com/gosom/scrapemate"
+	"github.com/shayan-human/map-miner-private/gmaps"
 )
 
 var _ scrapemate.ResultWriter = (*exampleWriter)(nil)
