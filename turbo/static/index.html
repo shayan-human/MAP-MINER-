@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Miner — Lead Extraction Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="dark">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><svg viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"
+                        fill="white" />
+                </svg></div>
+            <h2>Map Miner</h2>
+            <div class="powered-by">Powered by SHAYAN ALAM</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Workspace</div>
+            <a class="nav-item active" data-page="extractor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                    <path d="M11 8v6M8 11h6" />
+                </svg>Extractor</a>
+            <a class="nav-item" data-page="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                </svg>History</a>
+            <a class="nav-item" data-page="datasets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                </svg>Datasets</a>
+            <a class="nav-item" data-page="enricher"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                </svg>Email Enricher</a>
+            <a class="nav-item" data-page="proxies"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6" />
+                    <polyline points="8 6 2 12 8 18" />
+                    <line x1="12" y1="2" x2="12" y2="22" />
+                </svg>Proxies</a>
+            <div class="nav-label" style="margin-top:1.5rem">System</div>
+            <a class="nav-item" data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>Settings</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-pill">
+                <div class="user-avatar">SA</div>
+                <div class="user-info">
+                    <div class="user-name">Shayan Alam</div>
+                    <div class="user-role">Admin</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <span class="topbar-title" id="topbar-title">New Extraction Task</span>
+            <div class="topbar-actions">
+                <div class="topbar-icon notification-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg></div>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="content-inner">
+
+                <!-- === EXTRACTOR PAGE === -->
+                <div id="page-extractor">
+                    <div class="config-card" id="form-card">
+                        <div class="config-header">
+                            <h3>Search Configuration</h3>
+                            <p>Define your target audience and location parameters.</p>
+                        </div>
+                        <hr class="config-divider">
+                        <div class="config-body">
+                            <form id="scrape-form">
+                                <div class="form-group">
+                                    <label>Business Niche <span class="required">*</span></label>
+                                    <div class="input-wrapper"><span class="input-icon"><svg viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="11" cy="11" r="8" />
+                                                <path d="m21 21-4.35-4.35" />
+                                            </svg></span><input type="text" class="form-input has-icon" id="niche"
+                                            name="niche" placeholder="e.g. Roofers, Dentists, Car Detailers" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Location <span class="required">*</span></label>
+                                    <div class="input-wrapper"><span class="input-icon"><svg viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                                <circle cx="12" cy="10" r="3" />
+                                            </svg></span><input type="text" class="form-input has-icon" id="location"
+                                            name="location" placeholder="e.g. Miami, FL" required></div>
+                                </div>
+                                <div class="proxy-section">
+                                    <div class="section-toggle" id="proxy-toggle">
+                                        <div class="section-toggle-left">
+                                            <div class="section-dot"></div><span>Proxies & Network</span>
+                                        </div>
+                                        <div class="toggle-switch"><span class="toggle-label">Advanced Mode</span><label
+                                                class="switch"><input type="checkbox" id="advanced-toggle"><span
+                                                    class="slider"></span></label></div>
+                                    </div>
+                                    <div class="proxy-content" id="proxy-content">
+                                        <div class="proxy-input-group">
+                                            <input type="text" class="form-input" id="proxies" name="proxies"
+                                                placeholder="e.g. http://user:pass@host:port">
+                                            <button type="button" class="btn-verify" id="verify-proxy-btn"
+                                                title="Verification Proxy">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="icon-idle">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                                <div class="verify-spinner"></div>
+                                            </button>
+                                        </div>
+                                        <div class="form-hint" id="proxy-hint">Comma-separated list of HTTP/SOCKS
+                                            proxies</div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group-inline"><label>Max Results</label>
+                                        <div class="input-wrapper" style="position:relative"><input type="number"
+                                                class="form-input" id="max_results" name="max_results" value="50"
+                                                min="1" max="500"><span
+                                                style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:0.78rem;color:var(--text-muted);pointer-events:none">rows</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group-inline">
+                                        <label>Email Limit</label>
+                                        <div class="toggle-switch" style="margin-top: 5px;">
+                                            <span class="toggle-label"
+                                                style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">Extract
+                                                all emails</span>
+                                            <label class="switch">
+                                                <input type="checkbox" id="extract_all" name="extract_all" checked>
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                        <p class="form-hint" style="font-size: 0.65rem; margin-top: 4px;">Uncheck to
+                                            extract only 1 email (faster)</p>
+                                    </div>
+                                </div>
+                                <div class="form-row" style="margin-top: 1rem;">
+                                    <div class="form-group-inline"><label>Concurrency</label>
+                                        <div class="slider-container"><input type="range" class="range-slider"
+                                                id="concurrency" name="concurrency" min="1" max="20" value="5">
+                                            <div class="range-labels"><span>Slow (1)</span><span class="range-value"
+                                                    id="concurrency-value">5 Threads</span><span>Fast (20)</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-extract" id="extract-btn"><svg
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                                        </svg>Initiate Extraction</button>
+                                    <button type="button" class="btn btn-config" id="save-config-btn"><svg
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                            <polyline points="17 21 17 13 7 13 7 21" />
+                                            <polyline points="7 3 7 8 15 8" />
+                                        </svg>Save Config</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="status-card" id="status-card">
+                        <div class="status-spinner" id="spinner"></div>
+                        <div class="status-text" id="status-text">Connecting to Engine...</div>
+                        <div class="status-sub" id="status-sub">This may take a few moments</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar indeterminate" id="progress-bar"></div>
+                        </div>
+
+                        <!-- Results Summary -->
+                        <div id="results-summary" style="display:none; margin: 1.5rem 0;">
+                            <div class="refine-result-card"
+                                style="box-shadow: none; border: 1px solid var(--border); background: var(--bg-body);">
+                                <div class="refine-stat">
+                                    <span class="stat-label">Total Found</span>
+                                    <span class="stat-value" id="stats-total">-</span>
+                                </div>
+                                <div class="refine-stat">
+                                    <span class="stat-label">Duplicates</span>
+                                    <span class="stat-value text-red" id="stats-duplicates">-</span>
+                                </div>
+                                <div class="refine-stat">
+                                    <span class="stat-label">Unique Leads</span>
+                                    <span class="stat-value text-green" id="stats-unique">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Results Filter & Preview -->
+                    <div id="results-filter" style="display:none; margin-top: 1.5rem; text-align: left;">
+                        <div
+                            style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+                            Preview Results</div>
+                        <div
+                            style="display: flex; gap: 15px; margin-bottom: 1rem; background: var(--bg-body); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
+                            <label
+                                style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500;">
+                                <input type="radio" name="result-filter" value="all" checked> All
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500;">
+                                <input type="radio" name="result-filter" value="new"> New
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500;">
+                                <input type="radio" name="result-filter" value="duplicates"> Dups
+                            </label>
+                        </div>
+                        <div id="results-preview-container"
+                            style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); margin-bottom: 1.5rem;">
+                            <table id="results-preview-table"
+                                style="width: 100%; border-collapse: collapse; font-size: 0.75rem; color: var(--text-primary);">
+                                <thead
+                                    style="position: sticky; top: 0; background: var(--bg-card); border-bottom: 1px solid var(--border); z-index: 5;">
+                                    <tr>
+                                        <th style="padding: 10px; text-align: left; font-weight: 600;">Business Name
+                                        </th>
+                                        <th style="padding: 10px; text-align: center; font-weight: 600; width: 80px;">
+                                            Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="results-preview-body">
+                                    <!-- Rows will be added by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="download-actions"
+                        style="display:none; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                        <a href="#" class="btn btn-extract" id="download-unique-btn"
+                            style="background: linear-gradient(135deg, var(--accent-green), #059669);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Download Unique Leads (<span id="count-unique">0</span>)
+                        </a>
+                        <a href="#" class="btn btn-config" id="download-all-btn"
+                            style="border-color: var(--accent-green); color: var(--accent-green);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Download All Leads (<span id="count-total">0</span>)
+                        </a>
+                    </div>
+                    <div style="display:flex; gap: 10px; justify-content: center; margin-top: 1.5rem;">
+                        <button class="btn-reset" id="back-btn" style="margin-top:0; display:none">← Back</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === HISTORY PAGE === -->
+            <div id="page-history" style="display:none">
+                <div class="page-card">
+                    <div class="config-header">
+                        <h3>Extraction History</h3>
+                        <p>View and manage your past extraction jobs.</p>
+                    </div>
+                    <hr class="config-divider">
+                    <div class="page-body" id="history-list"></div>
+                </div>
+            </div>
+
+            <!-- === DATASETS PAGE === -->
+            <div id="page-datasets" style="display:none">
+                <div class="page-card">
+                    <div class="config-header">
+                        <h3>Datasets</h3>
+                        <p>Browse and download your extracted lead files.</p>
+                    </div>
+                    <hr class="config-divider">
+                    <div class="page-body" id="datasets-list"></div>
+                </div>
+            </div>
+
+
+            <!-- === PROXIES PAGE === -->
+            <div id="page-proxies" style="display:none">
+                <div class="page-card">
+                    <div class="config-header">
+                        <h3>Proxy Manager</h3>
+                        <p>Configure proxy servers for stealth scraping.</p>
+                    </div>
+                    <hr class="config-divider">
+                    <div class="page-body">
+                        <div id="proxy-list-items"></div>
+                        <div class="proxy-add-row">
+                            <input type="text" class="form-input" id="new-proxy-input"
+                                placeholder="http://user:pass@host:port">
+                            <button class="btn btn-extract" style="white-space:nowrap" onclick="addProxy()">+ Add
+                                Proxy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === EMAIL ENRICHER PAGE === -->
+            <div id="page-enricher" style="display:none">
+                <div class="page-card">
+                    <div class="config-header">
+                        <h3>Email Enricher</h3>
+                        <p>Upload a CSV with a <strong>website</strong> column. We'll scrape emails from each site.</p>
+                    </div>
+                    <hr class="config-divider">
+                    <div class="page-body">
+                        <!-- Upload Zone -->
+                        <div class="upload-zone" id="enricher-upload-zone">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48"
+                                height="48" style="color: var(--primary-light); margin-bottom: 0.75rem;">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                <polyline points="22,6 12,13 2,6" />
+                            </svg>
+                            <span class="upload-text">Drop your CSV here or click to browse</span>
+                            <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">Must contain
+                                a <code>website</code> column</span>
+                            <input type="file" id="enricher-file-input" accept=".csv" style="display:none">
+                        </div>
+
+                        <!-- Concurrency and Limit -->
+                        <div class="form-row" style="margin-top: 1.25rem;">
+                            <div class="form-group-inline" style="flex:1">
+                                <label>Concurrency</label>
+                                <div class="slider-container">
+                                    <input type="range" class="range-slider" id="enricher-concurrency" min="1" max="20"
+                                        value="5">
+                                    <div class="range-labels">
+                                        <span>Slow (1)</span>
+                                        <span class="range-value" id="enricher-concurrency-value">5 Threads</span>
+                                        <span>Fast (20)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group-inline" style="flex:0.8">
+                                <label>Email Limit</label>
+                                <div class="toggle-switch" style="margin-top: 5px;">
+                                    <span class="toggle-label"
+                                        style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">Extract
+                                        all emails</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="enricher-extract-all" name="enricher-extract-all"
+                                            checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <p class="form-hint" style="font-size: 0.65rem; margin-top: 4px;">Uncheck for 1 email
+                                    only</p>
+                            </div>
+                        </div>
+
+                        <!-- Proxy Input -->
+                        <div class="form-group" style="margin-top: 1.25rem;">
+                            <label>Proxies <span
+                                    style="font-weight:normal; color:var(--text-muted); font-size:0.75rem;">(Optional -
+                                    One per line)</span></label>
+                            <textarea class="form-input" id="enricher-proxies" rows="3"
+                                placeholder="http://user:pass@host:port&#10;http://host:port"
+                                style="height:auto; min-height:80px; resize:vertical; font-family:var(--font-mono); font-size:0.8rem;"></textarea>
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+                                <button class="btn btn-extract" id="enricher-verify-proxies"
+                                    style="padding: 0.4rem 0.8rem; font-size: 0.75rem; background: var(--bg-lighter);">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        width="14" height="14" style="margin-right:4px;">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    Verify Proxies
+                                </button>
+                                <span id="enricher-proxy-status"
+                                    style="font-size: 0.75rem; color: var(--text-muted);"></span>
+                            </div>
+                        </div>
+
+                        <!-- Progress -->
+                        <div id="enricher-progress" style="display:none; margin-top: 1.5rem;">
+                            <div class="status-card" style="display:block; padding: 2rem;">
+                                <div class="status-spinner" id="enricher-spinner"></div>
+                                <div class="status-text" id="enricher-status-text">Starting...</div>
+                                <div class="status-sub" id="enricher-status-sub">Preparing email enrichment</div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar indeterminate" id="enricher-progress-bar"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Results -->
+                        <div id="enricher-results" style="display:none; margin-top: 1.5rem;">
+                            <div class="refine-result-card">
+                                <div class="refine-stat">
+                                    <span class="stat-label">Total Leads</span>
+                                    <span class="stat-value" id="enricher-total">-</span>
+                                </div>
+                                <div class="refine-stat">
+                                    <span class="stat-label">With Emails</span>
+                                    <span class="stat-value text-green" id="enricher-with-email">-</span>
+                                </div>
+                                <div class="refine-stat">
+                                    <span class="stat-label">No Email</span>
+                                    <span class="stat-value text-red" id="enricher-no-email">-</span>
+                                </div>
+                            </div>
+                            <a href="#" class="btn btn-extract" id="enricher-download-btn"
+                                style="margin-top: 1rem; background: linear-gradient(135deg, var(--accent-green), #059669);">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Download Enriched CSV
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === SETTINGS PAGE === -->
+            <div id="page-settings" style="display:none">
+                <div class="page-card">
+                    <div class="config-header">
+                        <h3>Settings</h3>
+                        <p>Application preferences and configuration.</p>
+                    </div>
+                    <hr class="config-divider">
+                    <div class="page-body">
+                        <div class="setting-row"><span>Theme</span><span>Use the moon/sun button in the bottom-right
+                                corner</span></div>
+                        <div class="setting-row"><span>Data Directory</span><span
+                                class="text-mono">turbo/outputs/</span></div>
+                        <div class="setting-row"><span>Version</span><span>Map Miner v1.0.0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <div class="theme-toggle" id="theme-toggle" title="Toggle theme"><svg id="theme-icon" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg></div>
+
+    <!-- Serve static JS with cache buster -->
+    <script src="/static/app.js?v=1.1"></script>
+</body>
+
+</html>

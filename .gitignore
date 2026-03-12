@@ -1,0 +1,32 @@
+# Credentials
+.env
+*.env.*
+credentials.json
+token.json
+.agent/
+
+# Local/Temp Data
+.tmp/
+gmapsdata/
+outputs/
+turbo/outputs/
+webdata/
+*.log
+
+# Dependencies
+vendor/
+node_modules/
+bin/
+web-server
+
+# Untracked Repos & Data
+superpowers-repo/
+test_leads.csv
+test_broad.py
+*.test
+*.out
+.pytest_cache
+
+# System files
+.DS_Store
+Thumbs.db
