@@ -79,23 +79,39 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
     # helper for CSV preparation
     def prepare_df(leads_list):
         if not leads_list:
-            return pd.DataFrame(columns=['name', 'emails', 'website', 'phone', 'address', 'socials', 'ip_address'])
+            return pd.DataFrame(columns=['name', 'emails', 'website', 'phone', 'address', 'zip_code', 'socials', 'ip_address'])
         df = pd.DataFrame(leads_list)
         df = df.drop_duplicates(subset=['name'])
         if 'emails' in df.columns:
             df['emails'] = df['emails'].apply(lambda x: "; ".join(x) if isinstance(x, list) else (x or ""))
         else:
             df['emails'] = ""
+        
+        if 'zip_code' not in df.columns:
+            df['zip_code'] = ""
+            
         if 'socials' not in df.columns:
             df['socials'] = ""
         if 'ip_address' not in df.columns:
             df['ip_address'] = "N/A"
         
-        cols = ['name', 'emails', 'website', 'phone', 'address', 'socials', 'ip_address']
+        cols = ['name', 'emails', 'website', 'phone', 'address', 'zip_code', 'socials', 'ip_address']
         available_cols = [c for c in cols if c in df.columns]
         return df[available_cols]
 
     try:
+        # Get current IP
+        current_ip = "Local"
+        import httpx
+        try:
+            proxy_config = parse_proxies(proxy_string)[0] if proxy_string else None
+            async with httpx.AsyncClient(proxy=proxy_config, timeout=5.0, verify=False) as client:
+                ip_resp = await client.get("https://api.ipify.org", timeout=5.0)
+                if ip_resp.status_code == 200:
+                    current_ip = ip_resp.text.strip()
+        except:
+            pass
+
         jobs[job_id]["status"] = "Searching Google Maps..."
         businesses, fail_screenshot = await scrape_gmaps(query, depth=depth, max_results=max_results, proxy_string=proxy_string)
         
@@ -103,6 +119,16 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
             jobs[job_id]["status"] = "No businesses found."
             jobs[job_id]["fail_screenshot"] = fail_screenshot
             return
+
+        # Post-process results for ZIP and IP
+        for biz in businesses:
+            biz['ip_address'] = current_ip
+            # Extract ZIP Code using regex
+            if biz.get('address'):
+                zip_match = re.search(r'\b\d{5}(?:-\d{4})?\b', biz['address'])
+                biz['zip_code'] = zip_match.group(0) if zip_match else ""
+            else:
+                biz['zip_code'] = ""
 
         # 1. Track ALL found (before enrichment)
         total_found = len(businesses)

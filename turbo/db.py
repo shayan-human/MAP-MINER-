@@ -17,6 +17,8 @@ class LeadDB:
                     normalized_phone TEXT,
                     website TEXT,
                     address TEXT,
+                    zip_code TEXT,
+                    ip_address TEXT,
                     emails TEXT,
                     socials TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -72,6 +74,8 @@ class LeadDB:
                 phone = lead.get('phone', '')
                 website = lead.get('website', '')
                 address = lead.get('address', '')
+                zip_code = lead.get('zip_code', '')
+                ip_address = lead.get('ip_address', 'N/A')
                 emails = lead.get('emails', '')
                 if isinstance(emails, list):
                     emails = "; ".join(emails)
@@ -80,19 +84,21 @@ class LeadDB:
                 
                 try:
                     cursor.execute('''
-                        INSERT INTO leads (name, phone, normalized_phone, website, address, emails, socials)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                    ''', (name, phone, norm_phone, website, address, emails, socials))
+                        INSERT INTO leads (name, phone, normalized_phone, website, address, zip_code, ip_address, emails, socials)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (name, phone, norm_phone, website, address, zip_code, ip_address, emails, socials))
                     added_count += 1
                 except sqlite3.IntegrityError:
                     # Update existing lead with new data if available (merging)
                     cursor.execute('''
                         UPDATE leads SET 
                             website = COALESCE(NULLIF(?, ''), website),
+                            zip_code = COALESCE(NULLIF(?, ''), zip_code),
+                            ip_address = COALESCE(NULLIF(?, ''), ip_address),
                             emails = COALESCE(NULLIF(?, ''), emails),
                             socials = COALESCE(NULLIF(?, ''), socials)
                         WHERE LOWER(name) = ? AND (normalized_phone = ? OR LOWER(address) = ?)
-                    ''', (website, emails, socials, name.lower().strip(), norm_phone, address.lower().strip()))
+                    ''', (website, zip_code, ip_address, emails, socials, name.lower().strip(), norm_phone, address.lower().strip()))
                     continue
             conn.commit()
         return added_count

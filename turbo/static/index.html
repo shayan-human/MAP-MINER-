@@ -111,14 +111,33 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Location <span class="required">*</span></label>
-                                    <div class="input-wrapper"><span class="input-icon"><svg viewBox="0 0 24 24"
-                                                fill="none" stroke="currentColor" stroke-width="2"
-                                                stroke-linecap="round" stroke-linejoin="round">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <label>Location <span class="required">*</span></label>
+                                        <div class="toggle-switch">
+                                            <span class="toggle-label" style="font-size: 0.75rem;">Bulk ZIP Mode</span>
+                                            <label class="switch">
+                                                <input type="checkbox" id="bulk-mode-toggle">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="single-location-input">
+                                        <div class="input-wrapper">
+                                            <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                                                 <circle cx="12" cy="10" r="3" />
-                                            </svg></span><input type="text" class="form-input has-icon" id="location"
-                                            name="location" placeholder="e.g. Miami, FL" required></div>
+                                            </svg></span>
+                                            <input type="text" class="form-input has-icon" id="location" name="location" placeholder="e.g. Miami, FL">
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="bulk-location-input" style="display: none;">
+                                        <textarea class="form-input" id="bulk-locations" name="bulk_locations" rows="4" 
+                                            placeholder="Enter ZIP codes, one per line (e.g.&#10;32202&#10;32203&#10;32204)"
+                                            style="height: auto; min-height: 100px; padding: 12px; font-family: var(--font-mono); font-size: 0.85rem;"></textarea>
+                                        <div class="form-hint">Enter multiple ZIP codes or locations separated by new lines.</div>
+                                    </div>
                                 </div>
                                 <div class="proxy-section">
                                     <div class="section-toggle" id="proxy-toggle">
@@ -202,6 +221,17 @@
                         <div class="status-sub" id="status-sub">This may take a few moments</div>
                         <div class="progress-bar-container">
                             <div class="progress-bar indeterminate" id="progress-bar"></div>
+                        </div>
+                        
+                        <!-- Batch progress info -->
+                        <div id="batch-progress-container" style="display: none; margin-top: 1rem; padding: 12px; border-radius: 8px; background: var(--bg-lighter); border: 1px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; margin-bottom: 6px;">
+                                <span style="color: var(--text-muted)">Batch Progress</span>
+                                <span id="batch-progress-text">ZIP 1 of 10</span>
+                            </div>
+                            <div class="progress-bar-container" style="height: 6px;">
+                                <div class="progress-bar" id="batch-progress-bar" style="width: 10%; background: var(--primary);"></div>
+                            </div>
                         </div>
 
                         <!-- Results Summary -->

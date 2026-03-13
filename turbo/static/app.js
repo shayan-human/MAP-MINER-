@@ -13,8 +13,23 @@ const downloadAllBtn = document.getElementById('download-all-btn');
 const statsTotal = document.getElementById('stats-total');
 const statsDuplicates = document.getElementById('stats-duplicates');
 const statsUnique = document.getElementById('stats-unique');
-const countTotal = document.getElementById('count-total');
 const countUnique = document.getElementById('count-unique');
+const countTotal = document.getElementById('count-total');
+
+// === Sequential Batch Elements ===
+const bulkModeToggle = document.getElementById('bulk-mode-toggle');
+const singleLocationInput = document.getElementById('single-location-input');
+const bulkLocationInput = document.getElementById('bulk-location-input');
+const bulkLocationsArea = document.getElementById('bulk-locations');
+const locationInput = document.getElementById('location');
+const batchProgressContainer = document.getElementById('batch-progress-container');
+const batchProgressText = document.getElementById('batch-progress-text');
+const batchProgressBar = document.getElementById('batch-progress-bar');
+
+let isBulkMode = false;
+let batchQueue = [];
+let batchTotal = 0;
+let batchCurrent = 0;
 
 const resultsFilter = document.getElementById('results-filter');
 const resultsPreviewBody = document.getElementById('results-preview-body');
@@ -88,6 +103,20 @@ const advancedToggle = document.getElementById('advanced-toggle');
 const proxyContent = document.getElementById('proxy-content');
 advancedToggle.addEventListener('change', () => {
     proxyContent.classList.toggle('show', advancedToggle.checked);
+});
+
+// === Bulk Mode Toggle ===
+bulkModeToggle.addEventListener('change', () => {
+    isBulkMode = bulkModeToggle.checked;
+    singleLocationInput.style.display = isBulkMode ? 'none' : 'block';
+    bulkLocationInput.style.display = isBulkMode ? 'block' : 'none';
+    if (isBulkMode) {
+        locationInput.removeAttribute('required');
+        bulkLocationsArea.setAttribute('required', 'true');
+    } else {
+        locationInput.setAttribute('required', 'true');
+        bulkLocationsArea.removeAttribute('required');
+    }
 });
 
 // === Theme Toggle ===
@@ -200,11 +229,47 @@ verifyProxyBtn.addEventListener('click', async () => {
 // === Form Submit ===
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(form);
+    const niche = document.getElementById('niche').value;
+    const maxResults = document.getElementById('max_results').value;
+    const concurrency = concurrencySlider.value;
+    const proxies = document.getElementById('proxies').value;
     const extractAll = document.getElementById('extract_all').checked;
-    formData.append('email_limit', extractAll ? 0 : 1);
-    formCard.style.display = 'none';
-    statusCard.style.display = 'block';
+    const emailLimit = extractAll ? 0 : 1;
+
+    if (isBulkMode) {
+        const rawLocations = bulkLocationsArea.value.split('\n').map(l => l.trim()).filter(l => l);
+        if (rawLocations.length === 0) return alert('Please enter at least one location/ZIP code');
+        
+        batchQueue = rawLocations;
+        batchTotal = rawLocations.length;
+        batchCurrent = 0;
+        
+        formCard.style.display = 'none';
+        statusCard.style.display = 'block';
+        batchProgressContainer.style.display = 'block';
+        
+        processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit);
+    } else {
+        const location = locationInput.value;
+        if (!location) return alert('Please enter a location');
+        
+        const fd = new FormData();
+        fd.append('niche', niche);
+        fd.append('location', location);
+        fd.append('max_results', maxResults);
+        fd.append('concurrency', concurrency);
+        fd.append('proxies', proxies);
+        fd.append('email_limit', emailLimit);
+
+        formCard.style.display = 'none';
+        statusCard.style.display = 'block';
+        batchProgressContainer.style.display = 'none';
+        
+        startSingleScrape(fd);
+    }
+});
+
+async function startSingleScrape(formData) {
     statusText.innerText = 'Connecting to Engine...';
     statusSub.innerText = 'Launching extraction pipeline';
     if (spinner) spinner.style.display = 'inline-block';
@@ -226,7 +291,79 @@ form.addEventListener('submit', async (e) => {
         spinner.style.display = 'none';
         progressBar.classList.remove('indeterminate');
     }
-});
+}
+
+async function processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit) {
+    if (batchQueue.length === 0) {
+        statusText.innerText = 'All Batches Complete';
+        statusSub.innerText = `Processed ${batchTotal} locations sequentially.`;
+        if (spinner) spinner.style.display = 'none';
+        return;
+    }
+
+    const currentLocation = batchQueue.shift();
+    batchCurrent++;
+    
+    // Update batch UI
+    batchProgressText.innerText = `ZIP ${batchCurrent} of ${batchTotal}: ${currentLocation}`;
+    batchProgressBar.style.width = `${(batchCurrent / batchTotal) * 100}%`;
+    
+    const fd = new FormData();
+    fd.append('niche', niche);
+    fd.append('location', currentLocation);
+    fd.append('max_results', maxResults);
+    fd.append('concurrency', concurrency);
+    fd.append('proxies', proxies);
+    fd.append('email_limit', emailLimit);
+
+    statusText.innerText = `Initializing Batch: ${currentLocation}`;
+    statusSub.innerText = `Sequential task ${batchCurrent}/${batchTotal}`;
+    
+    if (spinner) spinner.style.display = 'inline-block';
+    if (progressBar) {
+        progressBar.classList.add('indeterminate');
+    }
+
+    try {
+        const response = await fetch('/api/scrape', { method: 'POST', body: fd });
+        const data = await response.json();
+        
+        // Custom polling for batch mode
+        const pollBatchStatus = () => {
+            const intv = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/jobs/${data.job_id}`);
+                    const statusData = await res.json();
+                    
+                    statusText.innerText = `[${currentLocation}] ${statusData.status}`;
+                    
+                    const enrichMatch = statusData.status.match(/\((\d+)\/(\d+)\)/);
+                    if (enrichMatch) {
+                        const currentL = parseInt(enrichMatch[1]);
+                        const totalL = parseInt(enrichMatch[2]);
+                        progressBar.classList.remove('indeterminate');
+                        progressBar.style.width = Math.round((currentL / totalL) * 100) + '%';
+                    }
+
+                    if (statusData.status === 'Complete' || statusData.status.startsWith('Error') || statusData.status.startsWith('No')) {
+                        clearInterval(intv);
+                        // Move to next batch after a short delay
+                        setTimeout(() => {
+                            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit);
+                        }, 2000);
+                    }
+                } catch (e) { /* retry */ }
+            }, 1500);
+        };
+        pollBatchStatus();
+        
+    } catch (err) {
+        statusText.innerText = `Batch Error: ${currentLocation}`;
+        setTimeout(() => {
+            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit);
+        }, 3000);
+    }
+}
 
 async function pollStatus(jobId) {
     const intv = setInterval(async () => {

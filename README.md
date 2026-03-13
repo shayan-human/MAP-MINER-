@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Map Miner - Map Miner
 
 **A powerful and open-source Google Maps scraper** for extracting business data at scale. Available as CLI, Web UI, REST API, or deployable to Kubernetes/AWS Lambda.
@@ -364,3 +365,6 @@ This project is licensed under the [MIT License](LICENSE). Copyright (c) 2025 Sh
 ## Legal Notice
 
 Please use this scraper responsibly and in accordance with applicable laws and regulations. Unauthorized scraping may violate terms of service.
+=======
+# MAP-MINER
+>>>>>>> target/main
