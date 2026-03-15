@@ -253,6 +253,7 @@ func (pm *Manager) RoundRobinGet() ([]string, error) {
 		if pm.strictMode {
 			return nil, fmt.Errorf("%w: no working proxies available", ErrNoWorkingProxies)
 		}
+
 		return nil, ErrNoWorkingProxies
 	}
 
