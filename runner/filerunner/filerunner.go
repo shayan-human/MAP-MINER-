@@ -207,6 +207,7 @@ func (r *fileRunner) setApp() error {
 			if r.cfg.StrictProxy {
 				return fmt.Errorf("proxy validation failed: %w", err)
 			}
+
 			fmt.Printf("WARNING: %v\n", err)
 		}
 

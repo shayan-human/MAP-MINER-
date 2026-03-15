@@ -71,6 +71,7 @@ func New(cfg *runner.Config) (runner.Runner, error) {
 			if cfg.StrictProxy {
 				return nil, fmt.Errorf("proxy validation failed: %w", err)
 			}
+
 			fmt.Printf("WARNING: %v\n", err)
 		}
 

@@ -281,6 +281,7 @@ func (w *webrunner) setupMate(_ context.Context, writer io.Writer, job *web.Job)
 			if w.cfg.StrictProxy {
 				return nil, fmt.Errorf("proxy validation failed: %w", err)
 			}
+
 			fmt.Printf("WARNING: %v\n", err)
 		}
 
@@ -301,6 +302,7 @@ func (w *webrunner) setupMate(_ context.Context, writer io.Writer, job *web.Job)
 			if w.cfg.StrictProxy {
 				return nil, fmt.Errorf("proxy validation failed: %w", err)
 			}
+
 			fmt.Printf("WARNING: %v\n", err)
 		}
 

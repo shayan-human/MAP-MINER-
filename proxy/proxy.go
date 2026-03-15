@@ -102,6 +102,7 @@ func (pm *Manager) MarkWorking(proxy string) {
 			return
 		}
 	}
+
 	pm.working = append(pm.working, proxy)
 }
 
@@ -126,6 +127,7 @@ func (pm *Manager) CountFailed() int {
 func (pm *Manager) Total() int {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
+
 	return len(pm.proxies)
 }
 
@@ -137,13 +139,16 @@ func (pm *Manager) ValidateAndFilter(_ context.Context) error {
 	if !pm.healthCheck {
 		pm.working = pm.proxies
 		log.Printf("[Manager] Health check disabled, using all %d proxies", len(pm.proxies))
+
 		return nil
 	}
 
 	log.Printf("[Manager] Starting health check for %d proxies...", len(pm.proxies))
 
 	var wg sync.WaitGroup
+
 	var mu sync.Mutex
+
 	validProxies := make([]string, 0)
 
 	testURL := "https://www.google.com"
@@ -156,6 +161,7 @@ func (pm *Manager) ValidateAndFilter(_ context.Context) error {
 			defer wg.Done()
 
 			isValid := pm.checkProxy(p, testURL, timeout)
+
 			mu.Lock()
 
 			if isValid {
@@ -226,6 +232,7 @@ func (pm *Manager) GetNextProxy() (string, error) {
 		if pm.strictMode {
 			return "", fmt.Errorf("%w: no working proxies available", ErrNoWorkingProxies)
 		}
+
 		return "", ErrNoWorkingProxies
 	}
 
