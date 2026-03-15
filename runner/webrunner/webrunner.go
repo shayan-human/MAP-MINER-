@@ -271,7 +271,7 @@ func (w *webrunner) setupMate(_ context.Context, writer io.Writer, job *web.Job)
 	var workingProxies []string
 
 	if len(w.cfg.Proxies) > 0 {
-		proxyMgr := proxy.NewProxyManager(
+		proxyMgr := proxy.NewManager(
 			w.cfg.Proxies,
 			proxy.WithStrictMode(w.cfg.StrictProxy),
 			proxy.WithHealthCheck(w.cfg.ProxyHealthCheck),
@@ -291,7 +291,7 @@ func (w *webrunner) setupMate(_ context.Context, writer io.Writer, job *web.Job)
 			return nil, fmt.Errorf("%w: no working proxies available", proxy.ErrNoWorkingProxies)
 		}
 	} else if len(job.Data.Proxies) > 0 {
-		proxyMgr := proxy.NewProxyManager(
+		proxyMgr := proxy.NewManager(
 			job.Data.Proxies,
 			proxy.WithStrictMode(w.cfg.StrictProxy),
 			proxy.WithHealthCheck(w.cfg.ProxyHealthCheck),

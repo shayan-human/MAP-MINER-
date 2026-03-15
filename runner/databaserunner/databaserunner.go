@@ -61,7 +61,7 @@ func New(cfg *runner.Config) (runner.Runner, error) {
 	}
 
 	if len(cfg.Proxies) > 0 {
-		proxyMgr := proxy.NewProxyManager(
+		proxyMgr := proxy.NewManager(
 			cfg.Proxies,
 			proxy.WithStrictMode(cfg.StrictProxy),
 			proxy.WithHealthCheck(cfg.ProxyHealthCheck),

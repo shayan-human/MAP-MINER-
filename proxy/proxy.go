@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type ProxyManager struct {
+type Manager struct {
 	proxies     []string
 	working     []string
 	failed      map[string]bool
@@ -21,22 +21,22 @@ type ProxyManager struct {
 	healthCheck bool
 }
 
-type ProxyOption func(*ProxyManager)
+type Option func(*Manager)
 
-func WithStrictMode(enabled bool) ProxyOption {
-	return func(pm *ProxyManager) {
+func WithStrictMode(enabled bool) Option {
+	return func(pm *Manager) {
 		pm.strictMode = enabled
 	}
 }
 
-func WithHealthCheck(enabled bool) ProxyOption {
-	return func(pm *ProxyManager) {
+func WithHealthCheck(enabled bool) Option {
+	return func(pm *Manager) {
 		pm.healthCheck = enabled
 	}
 }
 
-func NewProxyManager(proxies []string, opts ...ProxyOption) *ProxyManager {
-	pm := &ProxyManager{
+func NewManager(proxies []string, opts ...Option) *Manager {
+	pm := &Manager{
 		proxies:     make([]string, 0, len(proxies)),
 		working:     make([]string, 0, len(proxies)),
 		failed:      make(map[string]bool),
@@ -58,25 +58,28 @@ func NewProxyManager(proxies []string, opts ...ProxyOption) *ProxyManager {
 	return pm
 }
 
-func (pm *ProxyManager) GetProxies() []string {
+func (pm *Manager) GetProxies() []string {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
+
 	return pm.working
 }
 
-func (pm *ProxyManager) GetAllProxies() []string {
+func (pm *Manager) GetAllProxies() []string {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
+
 	return pm.proxies
 }
 
-func (pm *ProxyManager) IsStrictMode() bool {
+func (pm *Manager) IsStrictMode() bool {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
+
 	return pm.strictMode
 }
 
-func (pm *ProxyManager) MarkFailed(proxy string) {
+func (pm *Manager) MarkFailed(proxy string) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
@@ -90,7 +93,7 @@ func (pm *ProxyManager) MarkFailed(proxy string) {
 	}
 }
 
-func (pm *ProxyManager) MarkWorking(proxy string) {
+func (pm *Manager) MarkWorking(proxy string) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
@@ -102,42 +105,42 @@ func (pm *ProxyManager) MarkWorking(proxy string) {
 	pm.working = append(pm.working, proxy)
 }
 
-func (pm *ProxyManager) HasWorkingProxies() bool {
+func (pm *Manager) HasWorkingProxies() bool {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
 	return len(pm.working) > 0
 }
 
-func (pm *ProxyManager) CountWorking() int {
+func (pm *Manager) CountWorking() int {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
 	return len(pm.working)
 }
 
-func (pm *ProxyManager) CountFailed() int {
+func (pm *Manager) CountFailed() int {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
 	return len(pm.failed)
 }
 
-func (pm *ProxyManager) Total() int {
+func (pm *Manager) Total() int {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
 	return len(pm.proxies)
 }
 
-func (pm *ProxyManager) ValidateAndFilter(ctx context.Context) error {
+func (pm *Manager) ValidateAndFilter(_ context.Context) error {
 	if len(pm.proxies) == 0 {
 		return nil
 	}
 
 	if !pm.healthCheck {
 		pm.working = pm.proxies
-		log.Printf("[ProxyManager] Health check disabled, using all %d proxies", len(pm.proxies))
+		log.Printf("[Manager] Health check disabled, using all %d proxies", len(pm.proxies))
 		return nil
 	}
 
-	log.Printf("[ProxyManager] Starting health check for %d proxies...", len(pm.proxies))
+	log.Printf("[Manager] Starting health check for %d proxies...", len(pm.proxies))
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -148,11 +151,13 @@ func (pm *ProxyManager) ValidateAndFilter(ctx context.Context) error {
 
 	for _, proxy := range pm.proxies {
 		wg.Add(1)
+
 		go func(p string) {
 			defer wg.Done()
+
 			isValid := pm.checkProxy(p, testURL, timeout)
 			mu.Lock()
-			defer mu.Unlock()
+
 			if isValid {
 				validProxies = append(validProxies, p)
 			}
@@ -169,21 +174,23 @@ func (pm *ProxyManager) ValidateAndFilter(ctx context.Context) error {
 		if pm.strictMode {
 			return fmt.Errorf("%w: all %d proxies failed health check", ErrAllProxiesFailed, len(pm.proxies))
 		}
-		log.Printf("[ProxyManager] WARNING: All proxies failed health check, no proxies available")
+
+		log.Printf("[Manager] WARNING: All proxies failed health check, no proxies available")
+
 		return nil
 	}
 
-	log.Printf("[ProxyManager] Health check complete: %d/%d proxies working", len(pm.working), len(pm.proxies))
+	log.Printf("[Manager] Health check complete: %d/%d proxies working", len(pm.working), len(pm.proxies))
 
 	if len(pm.working) < len(pm.proxies) {
 		failed := len(pm.proxies) - len(pm.working)
-		log.Printf("[ProxyManager] %d proxy(s) failed and will be skipped", failed)
+		log.Printf("[Manager] %d proxy(s) failed and will be skipped", failed)
 	}
 
 	return nil
 }
 
-func (pm *ProxyManager) checkProxy(proxy, testURL string, timeout time.Duration) bool {
+func (pm *Manager) checkProxy(proxy, testURL string, timeout time.Duration) bool {
 	client := &http.Client{
 		Timeout: timeout,
 		Transport: &http.Transport{
@@ -202,15 +209,16 @@ func (pm *ProxyManager) checkProxy(proxy, testURL string, timeout time.Duration)
 	if err != nil {
 		return false
 	}
+
 	defer func() {
-		io.Copy(io.Discard, resp.Body)
+		_, _ = io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 	}()
 
 	return resp.StatusCode < 500
 }
 
-func (pm *ProxyManager) GetNextProxy() (string, error) {
+func (pm *Manager) GetNextProxy() (string, error) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
@@ -227,7 +235,7 @@ func (pm *ProxyManager) GetNextProxy() (string, error) {
 	return proxy, nil
 }
 
-func (pm *ProxyManager) RoundRobinGet() ([]string, error) {
+func (pm *Manager) RoundRobinGet() ([]string, error) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
@@ -241,7 +249,7 @@ func (pm *ProxyManager) RoundRobinGet() ([]string, error) {
 	return pm.working, nil
 }
 
-func (pm *ProxyManager) ValidateProxyFormat(proxy string) error {
+func (pm *Manager) ValidateProxyFormat(proxy string) error {
 	if proxy == "" {
 		return ErrEmptyProxy
 	}
@@ -263,7 +271,7 @@ func (pm *ProxyManager) ValidateProxyFormat(proxy string) error {
 	return nil
 }
 
-func (pm *ProxyManager) ValidateAllProxies() []error {
+func (pm *Manager) ValidateAllProxies() []error {
 	var errors []error
 
 	for _, proxy := range pm.proxies {
@@ -275,17 +283,17 @@ func (pm *ProxyManager) ValidateAllProxies() []error {
 	return errors
 }
 
-type ProxyError string
+type Error string
 
-func (e ProxyError) Error() string {
+func (e Error) Error() string {
 	return string(e)
 }
 
 const (
-	ErrNoWorkingProxies   ProxyError = "no working proxies available"
-	ErrAllProxiesFailed   ProxyError = "all proxies failed"
-	ErrEmptyProxy         ProxyError = "empty proxy string"
-	ErrInvalidProxyFormat ProxyError = "invalid proxy format"
+	ErrNoWorkingProxies   Error = "no working proxies available"
+	ErrAllProxiesFailed   Error = "all proxies failed"
+	ErrEmptyProxy         Error = "empty proxy string"
+	ErrInvalidProxyFormat Error = "invalid proxy format"
 )
 
 func ParseProxiesFromInput(input string) []string {

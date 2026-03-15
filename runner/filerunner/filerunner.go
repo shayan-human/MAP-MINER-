@@ -197,7 +197,7 @@ func (r *fileRunner) setApp() error {
 	}
 
 	if len(r.cfg.Proxies) > 0 {
-		proxyMgr := proxy.NewProxyManager(
+		proxyMgr := proxy.NewManager(
 			r.cfg.Proxies,
 			proxy.WithStrictMode(r.cfg.StrictProxy),
 			proxy.WithHealthCheck(r.cfg.ProxyHealthCheck),
