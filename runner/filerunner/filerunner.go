@@ -16,6 +16,7 @@ import (
 	"github.com/shayan-human/map-miner-private/deduper"
 	"github.com/shayan-human/map-miner-private/exiter"
 	"github.com/shayan-human/map-miner-private/leadsdb"
+	"github.com/shayan-human/map-miner-private/proxy"
 	"github.com/shayan-human/map-miner-private/runner"
 	"github.com/shayan-human/map-miner-private/tlmt"
 )
@@ -196,9 +197,25 @@ func (r *fileRunner) setApp() error {
 	}
 
 	if len(r.cfg.Proxies) > 0 {
-		opts = append(opts,
-			scrapemateapp.WithProxies(r.cfg.Proxies),
+		proxyMgr := proxy.NewProxyManager(
+			r.cfg.Proxies,
+			proxy.WithStrictMode(r.cfg.StrictProxy),
+			proxy.WithHealthCheck(r.cfg.ProxyHealthCheck),
 		)
+
+		if err := proxyMgr.ValidateAndFilter(context.Background()); err != nil {
+			if r.cfg.StrictProxy {
+				return fmt.Errorf("proxy validation failed: %w", err)
+			}
+			fmt.Printf("WARNING: %v\n", err)
+		}
+
+		workingProxies := proxyMgr.GetProxies()
+		if len(workingProxies) > 0 {
+			opts = append(opts, scrapemateapp.WithProxies(workingProxies))
+		} else if r.cfg.StrictProxy {
+			return fmt.Errorf("%w: no working proxies available", proxy.ErrNoWorkingProxies)
+		}
 	}
 
 	if !r.cfg.FastMode {

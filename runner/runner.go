@@ -15,6 +15,7 @@ import (
 	"github.com/mattn/go-runewidth"
 	"golang.org/x/term"
 
+	"github.com/shayan-human/map-miner-private/proxy"
 	"github.com/shayan-human/map-miner-private/s3uploader"
 	"github.com/shayan-human/map-miner-private/tlmt"
 	"github.com/shayan-human/map-miner-private/tlmt/gonoop"
@@ -66,6 +67,8 @@ type Config struct {
 	AwsLamdbaRunner          bool
 	DataFolder               string
 	Proxies                  []string
+	StrictProxy              bool
+	ProxyHealthCheck         bool
 	AwsAccessKey             string
 	AwsSecretKey             string
 	AwsRegion                string
@@ -112,7 +115,9 @@ func ParseConfig() *Config {
 	flag.IntVar(&cfg.Zoom, "zoom", 15, "set zoom level (0-21) for search")
 	flag.BoolVar(&cfg.WebRunner, "web", false, "run web server instead of crawling")
 	flag.StringVar(&cfg.DataFolder, "data-folder", "webdata", "data folder for web runner")
-	flag.StringVar(&proxies, "proxies", "", "comma separated list of proxies to use in the format protocol://user:pass@host:port example: socks5://localhost:9050 or http://user:pass@localhost:9050")
+	flag.StringVar(&proxies, "proxies", "", "list of proxies (one per line or comma-separated) to use in the format protocol://user:pass@host:port example: socks5://localhost:9050 or http://user:pass@localhost:9050")
+	flag.BoolVar(&cfg.StrictProxy, "strict-proxy", false, "enable strict proxy mode: fail if all proxies fail instead of falling back to real IP")
+	flag.BoolVar(&cfg.ProxyHealthCheck, "proxy-health-check", true, "enable proxy health check at startup to filter dead proxies")
 	flag.BoolVar(&cfg.AwsLamdbaRunner, "aws-lambda", false, "run as AWS Lambda function")
 	flag.BoolVar(&cfg.AwsLambdaInvoker, "aws-lambda-invoker", false, "run as AWS Lambda invoker")
 	flag.StringVar(&cfg.FunctionName, "function-name", "", "AWS Lambda function name")
@@ -171,7 +176,7 @@ func ParseConfig() *Config {
 	}
 
 	if proxies != "" {
-		cfg.Proxies = strings.Split(proxies, ",")
+		cfg.Proxies = proxy.ParseProxiesFromInput(proxies)
 	}
 
 	if cfg.AwsAccessKey != "" && cfg.AwsSecretKey != "" && cfg.AwsRegion != "" {

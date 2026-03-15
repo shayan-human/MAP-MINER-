@@ -13,6 +13,7 @@ import (
 	"github.com/gosom/scrapemate"
 	"github.com/gosom/scrapemate/scrapemateapp"
 	"github.com/shayan-human/map-miner-private/postgres"
+	"github.com/shayan-human/map-miner-private/proxy"
 	"github.com/shayan-human/map-miner-private/runner"
 	"github.com/shayan-human/map-miner-private/tlmt"
 )
@@ -60,9 +61,25 @@ func New(cfg *runner.Config) (runner.Runner, error) {
 	}
 
 	if len(cfg.Proxies) > 0 {
-		opts = append(opts,
-			scrapemateapp.WithProxies(cfg.Proxies),
+		proxyMgr := proxy.NewProxyManager(
+			cfg.Proxies,
+			proxy.WithStrictMode(cfg.StrictProxy),
+			proxy.WithHealthCheck(cfg.ProxyHealthCheck),
 		)
+
+		if err := proxyMgr.ValidateAndFilter(context.Background()); err != nil {
+			if cfg.StrictProxy {
+				return nil, fmt.Errorf("proxy validation failed: %w", err)
+			}
+			fmt.Printf("WARNING: %v\n", err)
+		}
+
+		workingProxies := proxyMgr.GetProxies()
+		if len(workingProxies) > 0 {
+			opts = append(opts, scrapemateapp.WithProxies(workingProxies))
+		} else if cfg.StrictProxy {
+			return nil, fmt.Errorf("%w: no working proxies available", proxy.ErrNoWorkingProxies)
+		}
 	}
 
 	if !cfg.FastMode {

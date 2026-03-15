@@ -17,6 +17,7 @@ import (
 	"github.com/gosom/scrapemate/scrapemateapp"
 	"github.com/shayan-human/map-miner-private/deduper"
 	"github.com/shayan-human/map-miner-private/exiter"
+	"github.com/shayan-human/map-miner-private/proxy"
 	"github.com/shayan-human/map-miner-private/runner"
 	"github.com/shayan-human/map-miner-private/tlmt"
 	"github.com/shayan-human/map-miner-private/web"
@@ -267,14 +268,53 @@ func (w *webrunner) setupMate(_ context.Context, writer io.Writer, job *web.Job)
 
 	hasProxy := false
 
+	var workingProxies []string
+
 	if len(w.cfg.Proxies) > 0 {
-		opts = append(opts, scrapemateapp.WithProxies(w.cfg.Proxies))
-		hasProxy = true
-	} else if len(job.Data.Proxies) > 0 {
-		opts = append(opts,
-			scrapemateapp.WithProxies(job.Data.Proxies),
+		proxyMgr := proxy.NewProxyManager(
+			w.cfg.Proxies,
+			proxy.WithStrictMode(w.cfg.StrictProxy),
+			proxy.WithHealthCheck(w.cfg.ProxyHealthCheck),
 		)
-		hasProxy = true
+
+		if err := proxyMgr.ValidateAndFilter(context.Background()); err != nil {
+			if w.cfg.StrictProxy {
+				return nil, fmt.Errorf("proxy validation failed: %w", err)
+			}
+			fmt.Printf("WARNING: %v\n", err)
+		}
+
+		workingProxies = proxyMgr.GetProxies()
+		if len(workingProxies) > 0 {
+			hasProxy = true
+		} else if w.cfg.StrictProxy {
+			return nil, fmt.Errorf("%w: no working proxies available", proxy.ErrNoWorkingProxies)
+		}
+	} else if len(job.Data.Proxies) > 0 {
+		proxyMgr := proxy.NewProxyManager(
+			job.Data.Proxies,
+			proxy.WithStrictMode(w.cfg.StrictProxy),
+			proxy.WithHealthCheck(w.cfg.ProxyHealthCheck),
+		)
+
+		if err := proxyMgr.ValidateAndFilter(context.Background()); err != nil {
+			if w.cfg.StrictProxy {
+				return nil, fmt.Errorf("proxy validation failed: %w", err)
+			}
+			fmt.Printf("WARNING: %v\n", err)
+		}
+
+		workingProxies = proxyMgr.GetProxies()
+		if len(workingProxies) > 0 {
+			opts = append(opts, scrapemateapp.WithProxies(workingProxies))
+			hasProxy = true
+		} else if w.cfg.StrictProxy {
+			return nil, fmt.Errorf("%w: no working proxies available", proxy.ErrNoWorkingProxies)
+		}
+	}
+
+	if len(workingProxies) > 0 {
+		opts = append(opts, scrapemateapp.WithProxies(workingProxies))
 	}
 
 	if !w.cfg.DisablePageReuse {
