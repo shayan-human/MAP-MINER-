@@ -177,7 +177,13 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
         duplicate_businesses = []
         
         for biz in businesses:
-            if not db.is_duplicate(biz.get('name'), biz.get('phone'), biz.get('address')):
+            # Get email from business (could be list or string)
+            emails = biz.get('emails', '')
+            if isinstance(emails, list):
+                email = emails[0] if emails else ''
+            else:
+                email = emails.split(';')[0].strip() if emails else ''
+            if not db.is_duplicate(biz.get('name'), biz.get('phone'), biz.get('address'), email):
                 unique_businesses.append(biz)
             else:
                 duplicate_businesses.append(biz)
@@ -557,7 +563,12 @@ async def refine_leads(file: UploadFile = File(...)):
         
         # 2. Filter against Master DB
         def is_duplicate(row):
-            return db.is_duplicate(row.get('name', ''), row.get('phone', ''), row.get('address', ''))
+            email = row.get('emails', '')
+            if isinstance(email, list):
+                email = email[0] if email else ''
+            elif isinstance(email, str):
+                email = email.split(';')[0].strip() if email else ''
+            return db.is_duplicate(row.get('name', ''), row.get('phone', ''), row.get('address', ''), email)
 
         # Apply filtering
         # We assume the uploaded CSV has at least a 'name' column
