@@ -86,7 +86,7 @@ async def extract_details(context, lead, idx, total, results_list, lock):
     finally:
         await page.close()
 
-async def scrape_gmaps(query, depth=2, max_results=50, proxy_string=None, is_subsearch=False):
+async def scrape_gmaps(query, depth=2, max_results=50, proxy_string=None, is_subsearch=False, strict_mode=False):
     """
     [ENGINE-V2.0] High-Robustness Maps Scraper
     """
@@ -94,6 +94,7 @@ async def scrape_gmaps(query, depth=2, max_results=50, proxy_string=None, is_sub
     
     print(f"\n[ENGINE-V2.0] STARTING SEARCH: {query}")
     print(f"[ENGINE-V2.0] Target: {max_results} leads, Depth: {depth}")
+    print(f"[ENGINE-V2.0] Strict Mode: {strict_mode}")
 
     pm = ProxyManager(parse_proxies(proxy_string)) if proxy_string else None
     
@@ -105,7 +106,9 @@ async def scrape_gmaps(query, depth=2, max_results=50, proxy_string=None, is_sub
             browser = await p.chromium.launch(headless=True, proxy=proxy_config)
             print("  [V2] Browser initialized.")
         except Exception as e:
-            if proxy_config:
+            if strict_mode and proxy_config:
+                raise Exception(f"❌ STRICT MODE: Proxy failed - {e}. Stopping to protect your IP. Use a working proxy or disable strict mode.")
+            elif proxy_config:
                 print(f"  [!] Proxy failed: {e}. Falling back to LOCAL IP...")
                 browser = await p.chromium.launch(headless=True)
             else:

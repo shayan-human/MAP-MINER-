@@ -163,6 +163,13 @@
                                             </button>
                                         </div>
                                         <div class="form-hint" id="proxy-hint">One proxy per line (HTTP/SOCKS5)</div>
+                                        <div class="strict-mode-toggle" style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+                                            <label class="switch" style="transform: scale(0.85);">
+                                                <input type="checkbox" id="strict-mode-extraction">
+                                                <span class="slider" style="background: #dc3545;"></span>
+                                            </label>
+                                            <span style="font-size: 0.8rem; color: #dc3545; font-weight: 500;">🔒 Strict Mode - Stop if proxy fails (protect your IP)</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -439,6 +446,13 @@
                                 </button>
                                 <span id="enricher-proxy-status"
                                     style="font-size: 0.75rem; color: var(--text-muted);"></span>
+                            </div>
+                            <div class="strict-mode-toggle" style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+                                <label class="switch" style="transform: scale(0.85);">
+                                    <input type="checkbox" id="strict-mode-enrich">
+                                    <span class="slider" style="background: #dc3545;"></span>
+                                </label>
+                                <span style="font-size: 0.8rem; color: #dc3545; font-weight: 500;">🔒 Strict Mode - Stop if proxy fails (protect your IP)</span>
                             </div>
                         </div>
 

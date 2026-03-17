@@ -82,7 +82,8 @@ async def start_scrape(
     depth: int = Form(2),
     concurrency: int = Form(5),
     proxies: str = Form(None),
-    email_limit: int = Form(0)
+    email_limit: int = Form(0),
+    strict_mode: bool = Form(False)
 ):
     job_id = str(uuid.uuid4())
     
@@ -98,15 +99,23 @@ async def start_scrape(
         "progress": 0,
         "total": 0,
         "file": None,
+        "strict_mode": strict_mode,
         "created_at": datetime.datetime.now().isoformat()
     }
     
-    background_tasks.add_task(run_scrape_task, job_id, niche, location, max_results, auto_depth, concurrency, proxies, email_limit)
+    background_tasks.add_task(run_scrape_task, job_id, niche, location, max_results, auto_depth, concurrency, proxies, email_limit, strict_mode)
     return {"job_id": job_id}
 
-async def run_scrape_task(job_id, niche, location, max_results, depth, concurrency, proxy_string, email_limit):
+async def run_scrape_task(job_id, niche, location, max_results, depth, concurrency, proxy_string, email_limit, strict_mode=False):
     query = f"{niche} in {location}"
     proxies_list = parse_proxies(proxy_string) if proxy_string else None
+    
+    # Strict Mode Check
+    if strict_mode and not proxy_string:
+        jobs[job_id]["status"] = "❌ Strict Mode: No proxy provided. Must use proxy to protect your IP."
+        jobs[job_id]["progress"] = 0
+        jobs[job_id]["total"] = 0
+        return
     
     # helper for CSV preparation
     def prepare_df(leads_list):
@@ -145,7 +154,7 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
             pass
 
         jobs[job_id]["status"] = "Searching Google Maps..."
-        businesses, fail_screenshot = await scrape_gmaps(query, depth=depth, max_results=max_results, proxy_string=proxy_string)
+        businesses, fail_screenshot = await scrape_gmaps(query, depth=depth, max_results=max_results, proxy_string=proxy_string, strict_mode=strict_mode)
         
         if not businesses:
             jobs[job_id]["status"] = "No businesses found."
@@ -224,12 +233,15 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
                 # Always try to enrich if website is present, even duplicates
                 # This ensures we get the latest emails for every search.
                 if biz.get('website'):
-                    res = await enrich_business(biz, proxies=proxies_list, limit=email_limit)
+                    res = await enrich_business(biz, proxies=proxies_list, limit=email_limit, strict_mode=strict_mode)
                 else:
                     res = biz
                     if 'emails' not in res: res['emails'] = []
                     if 'socials' not in res: res['socials'] = ""
-                    res['ip_address'] = "N/A"
+                    if strict_mode:
+                        res['ip_address'] = "BLOCKED - No proxy"
+                    else:
+                        res['ip_address'] = "N/A"
                 
                 enriched_results.append(res)
                 
@@ -419,7 +431,8 @@ async def enrich_csv(
     file: UploadFile = File(...),
     concurrency: int = Form(5),
     proxies: str = Form(None),
-    email_limit: int = Form(0)
+    email_limit: int = Form(0),
+    strict_mode: bool = Form(False)
 ):
     """Upload a CSV with a 'website' column; enriches each row with scraped emails."""
     try:
@@ -441,6 +454,7 @@ async def enrich_csv(
             "progress": 0,
             "total": len(uploaded_df),
             "file": None,
+            "strict_mode": strict_mode,
             "created_at": datetime.datetime.now().isoformat()
         }
 
@@ -448,17 +462,25 @@ async def enrich_csv(
         rows = uploaded_df.to_dict('records')
 
         background_tasks.add_task(
-            run_enrich_csv_task, job_id, rows, concurrency, proxies, email_limit
+            run_enrich_csv_task, job_id, rows, concurrency, proxies, email_limit, strict_mode
         )
         return {"job_id": job_id}
     except Exception as e:
         return JSONResponse({"error": f"Failed to process CSV: {str(e)}"}, status_code=400)
 
 
-async def run_enrich_csv_task(job_id, rows, concurrency, proxy_string, email_limit):
+async def run_enrich_csv_task(job_id, rows, concurrency, proxy_string, email_limit, strict_mode=False):
     """Background task: enrich each row with email scraping."""
     try:
         proxies_list = parse_proxies(proxy_string) if proxy_string else None
+        
+        # Strict Mode Check
+        if strict_mode and not proxy_string:
+            jobs[job_id]["status"] = "❌ Strict Mode: No proxy provided. Must use proxy to protect your IP."
+            jobs[job_id]["progress"] = 0
+            jobs[job_id]["total"] = 0
+            return
+        
         total = len(rows)
         semaphore = asyncio.Semaphore(concurrency)
         enriched_rows = []
@@ -471,11 +493,13 @@ async def run_enrich_csv_task(job_id, rows, concurrency, proxy_string, email_lim
                 website = row.get('website')
                 # Skip if not a string (handles NaN) or empty
                 if isinstance(website, str) and website.strip():
-                    res = await enrich_business(row, proxies=proxies_list, limit=email_limit)
+                    res = await enrich_business(row, proxies=proxies_list, limit=email_limit, strict_mode=strict_mode)
                 else:
                     res = row
                     if 'emails' not in res:
                         res['emails'] = []
+                    if strict_mode:
+                        res['ip_address'] = "BLOCKED - No website"
 
                 enriched_rows.append(res)
 

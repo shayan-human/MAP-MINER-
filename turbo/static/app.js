@@ -235,6 +235,7 @@ form.addEventListener('submit', async (e) => {
     const proxies = document.getElementById('proxies').value;
     const extractAll = document.getElementById('extract_all').checked;
     const emailLimit = extractAll ? 0 : 1;
+    const strictMode = document.getElementById('strict-mode-extraction').checked;
 
     if (isBulkMode) {
         const rawLocations = bulkLocationsArea.value.split('\n').map(l => l.trim()).filter(l => l);
@@ -248,7 +249,7 @@ form.addEventListener('submit', async (e) => {
         statusCard.style.display = 'block';
         batchProgressContainer.style.display = 'block';
         
-        processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit);
+        processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, strictMode);
     } else {
         const location = locationInput.value;
         if (!location) return alert('Please enter a location');
@@ -260,6 +261,7 @@ form.addEventListener('submit', async (e) => {
         fd.append('concurrency', concurrency);
         fd.append('proxies', proxies);
         fd.append('email_limit', emailLimit);
+        fd.append('strict_mode', strictMode);
 
         formCard.style.display = 'none';
         statusCard.style.display = 'block';
@@ -293,7 +295,7 @@ async function startSingleScrape(formData) {
     }
 }
 
-async function processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit) {
+async function processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, strictMode) {
     if (batchQueue.length === 0) {
         statusText.innerText = 'All Batches Complete';
         statusSub.innerText = `Processed ${batchTotal} locations sequentially.`;
@@ -315,6 +317,7 @@ async function processNextBatchItem(niche, maxResults, concurrency, proxies, ema
     fd.append('concurrency', concurrency);
     fd.append('proxies', proxies);
     fd.append('email_limit', emailLimit);
+    fd.append('strict_mode', strictMode);
 
     statusText.innerText = `Initializing Batch: ${currentLocation}`;
     statusSub.innerText = `Sequential task ${batchCurrent}/${batchTotal}`;
@@ -349,7 +352,7 @@ async function processNextBatchItem(niche, maxResults, concurrency, proxies, ema
                         clearInterval(intv);
                         // Move to next batch after a short delay
                         setTimeout(() => {
-                            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit);
+                            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, strictMode);
                         }, 2000);
                     }
                 } catch (e) { /* retry */ }
@@ -360,7 +363,7 @@ async function processNextBatchItem(niche, maxResults, concurrency, proxies, ema
     } catch (err) {
         statusText.innerText = `Batch Error: ${currentLocation}`;
         setTimeout(() => {
-            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit);
+            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, strictMode);
         }, 3000);
     }
 }
@@ -746,6 +749,10 @@ async function handleEnricherFile(file) {
     if (enricherProxies && enricherProxies.value.trim()) {
         formData.append('proxies', enricherProxies.value.trim());
     }
+
+    // Add strict mode
+    const strictModeEnrich = document.getElementById('strict-mode-enrich').checked;
+    formData.append('strict_mode', strictModeEnrich);
 
     // Hide results, show progress
     if (enricherResults) enricherResults.style.display = 'none';
