@@ -165,22 +165,23 @@
                                         </div>
                                         <div class="form-hint" id="proxy-hint">One proxy per line (IP:Port format)</div>
                                         <div style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
-                                            <select id="proxy-type-extraction" class="form-input" style="width: 130px; padding: 6px 10px; font-size: 0.8rem;">
+                                            <select id="proxy-type-extraction" class="form-input proxy-select">
                                                 <option value="http://">HTTP</option>
                                                 <option value="https://">HTTPS</option>
                                                 <option value="socks4://">SOCKS4</option>
                                                 <option value="socks5://">SOCKS5</option>
                                             </select>
-                                            <span style="font-size: 0.7rem; color: var(--text-muted);">Select protocol for your proxies</span>
-                                        </div>
-                                        <div class="strict-mode-toggle" style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
-                                            <label class="switch" style="transform: scale(0.85);">
-                                                <input type="checkbox" id="strict-mode-extraction">
-                                                <span class="slider"></span>
-                                            </label>
-                                            <span id="strict-mode-extraction-label" style="font-size: 0.8rem; color: #6c757d; font-weight: 500;">🔒 Strict Mode - Stop if proxy fails (protect your IP)</span>
+                                            <span style="font-size: 0.7rem; color: var(--text-muted);">Select protocol</span>
                                         </div>
                                     </div>
+                                </div>
+                                <!-- Strict Mode - Always visible, outside Advanced toggle -->
+                                <div class="strict-mode-toggle" style="margin-top: 15px; display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(220, 53, 69, 0.1); border-radius: 8px; border: 1px solid rgba(220, 53, 69, 0.3);">
+                                    <label class="switch" style="transform: scale(0.85);">
+                                        <input type="checkbox" id="strict-mode-extraction">
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span id="strict-mode-extraction-label" style="font-size: 0.8rem; color: #6c757d; font-weight: 500;">🔒 Strict Mode - Stop if proxy fails (protect your IP)</span>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group-inline"><label>Max Results</label>
@@ -458,15 +459,15 @@
                                     style="font-size: 0.75rem; color: var(--text-muted);"></span>
                             </div>
                             <div style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
-                                <select id="proxy-type-enrich" class="form-input" style="width: 130px; padding: 6px 10px; font-size: 0.8rem;">
+                                <select id="proxy-type-enrich" class="form-input proxy-select">
                                     <option value="http://">HTTP</option>
                                     <option value="https://">HTTPS</option>
                                     <option value="socks4://">SOCKS4</option>
                                     <option value="socks5://">SOCKS5</option>
                                 </select>
-                                <span style="font-size: 0.7rem; color: var(--text-muted);">Select protocol for your proxies</span>
+                                <span style="font-size: 0.7rem; color: var(--text-muted);">Select protocol</span>
                             </div>
-                            <div class="strict-mode-toggle" style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+                            <div class="strict-mode-toggle" style="margin-top: 15px; display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(220, 53, 69, 0.1); border-radius: 8px; border: 1px solid rgba(220, 53, 69, 0.3);">
                                 <label class="switch" style="transform: scale(0.85);">
                                     <input type="checkbox" id="strict-mode-enrich">
                                     <span class="slider"></span>

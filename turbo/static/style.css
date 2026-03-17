@@ -425,6 +425,29 @@ body {
     background: #fff
 }
 
+/* Proxy Type Dropdown */
+.proxy-select {
+    background: var(--bg-lighter) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+    cursor: pointer;
+}
+
+.proxy-select option {
+    background: var(--bg-dark) !important;
+    color: var(--text-primary) !important;
+    padding: 8px;
+}
+
+.proxy-select:focus {
+    border-color: var(--primary) !important;
+    outline: none;
+    box-shadow: 0 0 0 4px var(--primary-glow);
+}
+
 .form-hint {
     font-size: .72rem;
     color: var(--text-muted);
