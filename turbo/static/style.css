@@ -436,10 +436,36 @@ body {
     cursor: pointer;
 }
 
-.proxy-select option {
-    background: var(--bg-dark) !important;
-    color: var(--text-primary) !important;
-    padding: 8px;
+/* Fix dropdown options for dark theme - target all browsers */
+.proxy-select option,
+.proxy-select optgroup {
+    background: #1a1a2e !important;
+    color: #ffffff !important;
+    padding: 10px !important;
+}
+
+/* Webkit browsers (Chrome, Edge, Safari) */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    .proxy-select option {
+        background: #1a1a2e !important;
+        color: #ffffff !important;
+        padding: 8px !important;
+    }
+    
+    .proxy-select option:hover,
+    .proxy-select option:focus,
+    .proxy-select option:checked {
+        background: #2d2d4a !important;
+        color: #ffffff !important;
+    }
+}
+
+/* Firefox */
+@-moz-document url-prefix() {
+    .proxy-select option {
+        background: #1a1a2e !important;
+        color: #ffffff !important;
+    }
 }
 
 .proxy-select:focus {
