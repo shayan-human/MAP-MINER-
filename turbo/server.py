@@ -4,6 +4,7 @@ import asyncio
 import uuid
 import json
 import datetime
+import subprocess
 from fastapi import FastAPI, Form, Request, BackgroundTasks, UploadFile, File
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,6 +13,37 @@ from turbo.utils import parse_proxies
 from turbo.enrich import enrich_business
 from turbo.db import LeadDB
 import pandas as pd
+
+REPO_URL = "https://github.com/shayan-human/MAP-MINER-TEMP.git"
+LOCAL_VERSION_FILE = os.path.join(os.path.dirname(__file__), ".version")
+
+def check_and_update():
+    try:
+        current_hash = subprocess.run(
+            ["git", "rev-parse", "HEAD"], 
+            capture_output=True, text=True, cwd=os.path.dirname(__file__)
+        ).stdout.strip()
+        
+        stored_hash = ""
+        if os.path.exists(LOCAL_VERSION_FILE):
+            with open(LOCAL_VERSION_FILE, "r") as f:
+                stored_hash = f.read().strip()
+        
+        if stored_hash != current_hash:
+            result = subprocess.run(
+                ["git", "pull", "origin", "main"],
+                capture_output=True, text=True, cwd=os.path.dirname(__file__)
+            )
+            if result.returncode == 0:
+                with open(LOCAL_VERSION_FILE, "w") as f:
+                    f.write(current_hash)
+                print(f"MAP-MINER: Updated to {current_hash[:8]}")
+                return True
+        return False
+    except Exception:
+        return False
+
+check_and_update()
 
 app = FastAPI(title="Map Miner Dashboard")
 

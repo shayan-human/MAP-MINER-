@@ -35,6 +35,7 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
+turbo/map_miner.egg-info/
 
 # Go
 dist/
