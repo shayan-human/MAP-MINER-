@@ -309,7 +309,7 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
         save_history(history)
         
         # Add to Master DB
-        db.add_leads(enriched_uniques)
+        db.add_leads(uniques_list)
             
     except Exception as e:
         import traceback
