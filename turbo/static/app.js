@@ -432,9 +432,16 @@ async function pollStatus(jobId) {
                 }
 
                 // Show statistics
-                if (statsTotal) statsTotal.innerText = data.total_found || data.result_count || '?';
+                const totalLeads = data.total_found || data.result_count || 0;
+                const withEmail = data.email_count || 0;
+                const noEmail = totalLeads - withEmail;
+
+                if (statsTotal) statsTotal.innerText = totalLeads || '?';
+                const statsWithEmail = document.getElementById('stats-with-email');
+                const statsNoEmail = document.getElementById('stats-no-email');
+                if (statsWithEmail) statsWithEmail.innerText = withEmail;
+                if (statsNoEmail) statsNoEmail.innerText = noEmail >= 0 ? noEmail : 0;
                 if (statsDuplicates) statsDuplicates.innerText = data.duplicates_skipped || 0;
-                if (statsUnique) statsUnique.innerText = data.unique_found || data.result_count || '?';
                 if (resultsSummary) resultsSummary.style.display = 'block';
 
                 const rc = data.result_count || '?';
@@ -732,6 +739,8 @@ const enricherResults = document.getElementById('enricher-results');
 const enricherConcurrency = document.getElementById('enricher-concurrency');
 const enricherConcurrencyValue = document.getElementById('enricher-concurrency-value');
 
+let pendingEnricherFile = null;
+
 if (enricherConcurrency) {
     enricherConcurrency.addEventListener('input', () => {
         const val = ((enricherConcurrency.value - enricherConcurrency.min) / (enricherConcurrency.max - enricherConcurrency.min)) * 100;
@@ -759,13 +768,57 @@ if (enricherUploadZone) {
         e.preventDefault();
         enricherUploadZone.classList.remove('dragover');
         if (e.dataTransfer.files.length) {
-            handleEnricherFile(e.dataTransfer.files[0]);
+            onEnricherFileSelected(e.dataTransfer.files[0]);
         }
     });
 
     enricherFileInput.addEventListener('change', (e) => {
         if (e.target.files.length) {
-            handleEnricherFile(e.target.files[0]);
+            onEnricherFileSelected(e.target.files[0]);
+        }
+    });
+}
+
+function onEnricherFileSelected(file) {
+    if (!file.name.endsWith('.csv')) {
+        alert('Please select a CSV file.');
+        return;
+    }
+    pendingEnricherFile = file;
+    document.getElementById('enricher-file-name').innerText = file.name;
+    document.getElementById('enricher-file-display').style.display = 'block';
+    
+    const startBtn = document.getElementById('enricher-start-btn');
+    if (startBtn) {
+        startBtn.disabled = false;
+        startBtn.style.opacity = '1';
+    }
+    
+    if (enricherResults) enricherResults.style.display = 'none';
+}
+
+const enricherFileRemoveBtn = document.getElementById('enricher-file-remove');
+if (enricherFileRemoveBtn) {
+    enricherFileRemoveBtn.addEventListener('click', () => {
+        pendingEnricherFile = null;
+        document.getElementById('enricher-file-display').style.display = 'none';
+        const startBtn = document.getElementById('enricher-start-btn');
+        if (startBtn) {
+            startBtn.disabled = true;
+            startBtn.style.opacity = '0.6';
+        }
+        if (enricherFileInput) enricherFileInput.value = '';
+    });
+}
+
+const enricherStartBtn = document.getElementById('enricher-start-btn');
+if (enricherStartBtn) {
+    enricherStartBtn.addEventListener('click', () => {
+        if (pendingEnricherFile) {
+            document.getElementById('enricher-file-display').style.display = 'none';
+            handleEnricherFile(pendingEnricherFile);
+        } else {
+            alert('Please select a CSV file first.');
         }
     });
 }
@@ -876,10 +929,13 @@ function pollEnrichStatus(jobId) {
                 const totalCount = data.result_count || 0;
                 const emailCount = data.email_count || 0;
                 const noEmail = totalCount - emailCount;
+                const duplicates = data.duplicates_skipped || 0;
 
                 document.getElementById('enricher-total').innerText = totalCount;
                 document.getElementById('enricher-with-email').innerText = emailCount;
-                document.getElementById('enricher-no-email').innerText = noEmail;
+                document.getElementById('enricher-no-email').innerText = noEmail >= 0 ? noEmail : 0;
+                const enricherDuplicates = document.getElementById('enricher-duplicates');
+                if (enricherDuplicates) enricherDuplicates.innerText = duplicates;
 
                 if (data.file) {
                     document.getElementById('enricher-download-btn').href = `/api/download/${data.file}`;
@@ -908,6 +964,16 @@ function resetEnricherUI() {
         enricherUploadZone.style.pointerEvents = 'auto';
     }
     if (enricherFileInput) enricherFileInput.value = '';
+    
+    pendingEnricherFile = null;
+    const fileDisplay = document.getElementById('enricher-file-display');
+    if (fileDisplay) fileDisplay.style.display = 'none';
+    
+    const startBtn = document.getElementById('enricher-start-btn');
+    if (startBtn) {
+        startBtn.disabled = true;
+        startBtn.style.opacity = '0.6';
+    }
 }
 
 // Proxy verification for Enricher page

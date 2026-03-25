@@ -267,12 +267,22 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
         df_all = prepare_df(enriched_results)
         
         # Filter for unique ones (for the "unique" file)
+        duplicate_names_phones = {(b.get('name'), b.get('phone')) for b in duplicate_businesses}
+        
         uniques_list = []
+        duplicates_list = []
         for res in enriched_results:
-            if not any(u.get('name') == res.get('name') and u.get('phone') == res.get('phone') for u in uniques_list):
-                uniques_list.append(res)
+            is_db_dup = (res.get('name'), res.get('phone')) in duplicate_names_phones
+            if is_db_dup:
+                duplicates_list.append(res)
+            else:
+                if not any(u.get('name') == res.get('name') and u.get('phone') == res.get('phone') for u in uniques_list):
+                    uniques_list.append(res)
+                else:
+                    duplicates_list.append(res)
         
         df_unique = prepare_df(uniques_list)
+        df_duplicates = prepare_df(duplicates_list)
         
         # Save files
         file_unique = f"leads_unique_{job_id[:8]}.csv"
@@ -289,7 +299,7 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
         jobs[job_id]["result_count"] = len(df_all)
         jobs[job_id]["email_count"] = leads_with_email
         jobs[job_id]["results_unique"] = df_unique.to_dict('records')
-        jobs[job_id]["results_duplicates"] = [] # Not really used in this logic now
+        jobs[job_id]["results_duplicates"] = df_duplicates.to_dict('records')
         
         # Save to history
         history = load_history()
@@ -488,6 +498,18 @@ async def run_enrich_csv_task(job_id, rows, concurrency, proxy_string, email_lim
             return
         
         total = len(rows)
+        
+        # Calculate how many of the inputted rows are already in our database
+        def check_is_duplicate(row):
+            email = row.get('emails', '')
+            if isinstance(email, list):
+                email = email[0] if email else ''
+            elif isinstance(email, str):
+                email = email.split(';')[0].strip() if email else ''
+            return db.is_duplicate(row.get('name', ''), row.get('phone', ''), row.get('address', ''), email)
+
+        duplicates_skipped = sum(1 for r in rows if check_is_duplicate(r))
+        
         semaphore = asyncio.Semaphore(concurrency)
         enriched_rows = []
         progress_count = 0
@@ -538,6 +560,7 @@ async def run_enrich_csv_task(job_id, rows, concurrency, proxy_string, email_lim
         jobs[job_id]["file"] = filename
         jobs[job_id]["result_count"] = total
         jobs[job_id]["email_count"] = leads_with_email
+        jobs[job_id]["duplicates_skipped"] = duplicates_skipped
 
         print(f"  [Enricher] Done! {leads_with_email}/{total} leads got emails → {filename}")
 
