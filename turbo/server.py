@@ -658,12 +658,12 @@ async def refine_leads(file: UploadFile = File(...)):
 
 # Serve Frontend
 @app.get("/dashboard")
-@app.get("/")
-async def read_index():
+@app.get("/app-dashboard")
+async def read_dashboard_index():
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
-    return JSONResponse({"error": "Frontend not built yet. Check turbo/static/"})
+    return JSONResponse({"error": "Dashboard front-end not found. Check turbo/static/index.html"})
 
 if __name__ == "__main__":
     import uvicorn
