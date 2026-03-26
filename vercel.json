@@ -16,6 +16,10 @@
     {
       "source": "/(.*).html",
       "destination": "/$1.html"
+    },
+    {
+      "source": "/",
+      "destination": "/api/index.py"
     }
   ]
 }
