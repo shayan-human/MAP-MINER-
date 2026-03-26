@@ -712,7 +712,16 @@ async def refine_leads(file: UploadFile = File(...), user: dict = Depends(get_cu
     except Exception as e:
         return {"status": "error", "message": f"Refinement failed: {str(e)}"}
 
-# Serve Frontend
+# Serve Landing Page at Root
+@app.get("/")
+async def read_root_index():
+    # Use parent directory for the landing page index.html
+    root_index = os.path.join(os.path.dirname(os.path.dirname(__file__)), "index.html")
+    if os.path.exists(root_index):
+        return FileResponse(root_index)
+    return JSONResponse({"error": "Landing page index.html not found at root"})
+
+# Serve Dashboard
 @app.get("/dashboard")
 @app.get("/app-dashboard")
 async def read_dashboard_index():
