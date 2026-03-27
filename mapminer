@@ -1,27 +1,5 @@
 #!/bin/bash
-# MAP-MINER - Auto-update and run server
-
-# Always work from mapminer directory
-MAPMINER_DIR="$HOME/mapminer"
-cd "$MAPMINER_DIR"
-
-# Auto-update first
-if [ -d ".git" ]; then
-    echo "🔄 Checking for updates..."
-    git pull origin main 2>/dev/null && echo "✅ Updated to latest" || echo "⚠️ Using local version"
-fi
-
-# Check venv
-if [ ! -d "venv" ]; then
-    echo "📦 Creating virtual environment..."
-    python3 -m venv venv
-fi
-
-# Activate and install if needed
+cd ~/mapminer
 source venv/bin/activate
-pip install -r turbo/requirements.txt >/dev/null 2>&1
-pip install playwright >/dev/null 2>&1
-python -m playwright install chromium >/dev/null 2>&1
-
-echo "🚀 Starting server on http://localhost:8000"
-python3 -m uvicorn turbo.server:app --reload --port 8000
+cd turbo
+python3 -m uvicorn server:app --reload --port 8000
