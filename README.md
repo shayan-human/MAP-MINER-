@@ -6,25 +6,26 @@
 
 ---
 
-## Quick Install & Run (2 Commands)
+## Quick Install & Run
 
-### Linux/macOS
+### Linux/macOS (2 commands)
 
 ```bash
-# 1. Install (one time) - auto-clones repo
+# 1. Install (one time)
 curl -sL https://raw.githubusercontent.com/shayan-human/MAP-MINER/main/install.sh | bash
 
 # 2. Run (anytime - auto-updates!)
-mapminer
+cd ~/mapminer && ./mapminer
 ```
 
-### Windows
+### Windows (2 commands)
 
 ```powershell
-# 1. Install (one time) - auto-clones repo
+# 1. Install (one time)
 irm https://raw.githubusercontent.com/shayan-human/MAP-MINER/main/install.ps1 | iex
 
 # 2. Run
+cd $env:USERPROFILE\mapminer
 mapminer.bat
 ```
 
@@ -46,15 +47,9 @@ Then open **http://localhost:8000**
 ## Manual Install
 
 ```bash
-git clone https://github.com/shayan-human/MAP-MINER.git
-cd MAP-MINER
-
-# Linux/Mac
-./mapminer install
+git clone https://github.com/shayan-human/MAP-MINER.git ~/mapminer
+cd ~/mapminer
 ./mapminer
-
-# Windows
-mapminer.bat
 ```
 
 ---
