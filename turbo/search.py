@@ -5,7 +5,31 @@ import os
 import datetime
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
-from turbo.utils import parse_proxies
+
+
+def parse_proxies(proxy_string):
+    """Parse proxy string into list of proxy URLs."""
+    if not proxy_string:
+        return []
+    proxy_string = proxy_string.replace("\n", ",").replace("\r", ",")
+    raw_proxies = [p.strip() for p in proxy_string.split(",") if p.strip()]
+    parsed = []
+    for p in raw_proxies:
+        if "://" in p:
+            parsed.append(p)
+            continue
+        parts = p.split(":")
+        if len(parts) == 4:
+            if parts[3].isdigit():
+                p = f"http://{parts[0]}:{parts[1]}@{parts[2]}:{parts[3]}"
+            elif parts[1].isdigit():
+                p = f"http://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+            else:
+                p = "http://" + p
+        else:
+            p = "http://" + p
+        parsed.append(p)
+    return parsed
 
 async def handle_consent(page):
     """Aggressive consent handler for Google/Maps."""
@@ -86,12 +110,57 @@ async def extract_details(context, lead, idx, total, results_list, lock):
     finally:
         await page.close()
 
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0 Safari/537.36",
+]
+
+def get_random_ua():
+    return random.choice(USER_AGENTS)
+
+class ProxyManager:
+    def __init__(self, proxies):
+        self.proxies = [p for p in proxies if self._is_valid(p)]
+        self.index = 0
+
+    def _is_valid(self, proxy_url):
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(proxy_url)
+            return all([parsed.scheme, parsed.hostname])
+        except:
+            return False
+
+    def get_next(self):
+        if not self.proxies:
+            return None
+        proxy = self.proxies[self.index]
+        self.index = (self.index + 1) % len(self.proxies)
+        return proxy
+
+    def get_playwright_proxy(self):
+        proxy_url = self.get_next()
+        if not proxy_url:
+            return None
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(proxy_url)
+            port = parsed.port if parsed.port else (80 if parsed.scheme == 'http' else 443)
+            pw_proxy = {"server": f"{parsed.scheme}://{parsed.hostname}:{port}"}
+            if parsed.username:
+                pw_proxy["username"] = parsed.username
+            if parsed.password:
+                pw_proxy["password"] = parsed.password
+            return pw_proxy
+        except:
+            return None
+
 async def scrape_gmaps(query, depth=2, max_results=50, proxy_string=None, is_subsearch=False, strict_mode=False):
     """
     [ENGINE-V2.0] High-Robustness Maps Scraper
     """
-    from turbo.utils import get_random_ua, ProxyManager
-    
     print(f"\n[ENGINE-V2.0] STARTING SEARCH: {query}")
     print(f"[ENGINE-V2.0] Target: {max_results} leads, Depth: {depth}")
     print(f"[ENGINE-V2.0] Strict Mode: {strict_mode}")

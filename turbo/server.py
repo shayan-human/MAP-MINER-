@@ -9,10 +9,34 @@ from fastapi import FastAPI, Form, Request, BackgroundTasks, UploadFile, File
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from turbo.search import scrape_gmaps
-from turbo.utils import parse_proxies
 from turbo.enrich import enrich_business
 from turbo.db import LeadDB
 import pandas as pd
+
+
+def parse_proxies(proxy_string):
+    """Parse proxy string into list of proxy URLs."""
+    if not proxy_string:
+        return []
+    proxy_string = proxy_string.replace("\n", ",").replace("\r", ",")
+    raw_proxies = [p.strip() for p in proxy_string.split(",") if p.strip()]
+    parsed = []
+    for p in raw_proxies:
+        if "://" in p:
+            parsed.append(p)
+            continue
+        parts = p.split(":")
+        if len(parts) == 4:
+            if parts[3].isdigit():
+                p = f"http://{parts[0]}:{parts[1]}@{parts[2]}:{parts[3]}"
+            elif parts[1].isdigit():
+                p = f"http://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+            else:
+                p = "http://" + p
+        else:
+            p = "http://" + p
+        parsed.append(p)
+    return parsed
 
 REPO_URL = "https://github.com/shayan-human/MAP-MINER-TEMP.git"
 LOCAL_VERSION_FILE = os.path.join(os.path.dirname(__file__), ".version")
@@ -418,7 +442,6 @@ class ProxyTestRequest(BaseModel):
 @app.post("/api/test-proxy")
 async def test_proxy(data: ProxyTestRequest):
     import httpx
-    from turbo.utils import parse_proxies
     
     proxies = parse_proxies(data.proxy)
     if not proxies:
