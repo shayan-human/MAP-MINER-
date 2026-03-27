@@ -1,0 +1,56 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+case "${1:-start}" in
+    install)
+        echo "📦 Installing dependencies..."
+        [ ! -d "venv" ] && python3 -m venv venv
+        source venv/bin/activate
+        pip install -r turbo/requirements.txt -q
+        echo "✅ Installed! Run './mapminer' to start."
+        ;;
+    start|run|"")
+        # Auto-update first
+        if [ -d ".git" ]; then
+            echo "🔄 Checking for updates..."
+            git pull origin main 2>/dev/null && echo "✅ Updated to latest version" || echo "⚠️ Using local version"
+        fi
+        
+        # Create venv if missing
+        if [ ! -d "venv" ]; then
+            echo "📦 Creating virtual environment..."
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install -r turbo/requirements.txt -q
+        else
+            source venv/bin/activate
+        fi
+        
+        echo "🚀 Starting server on http://localhost:8000"
+        cd turbo
+        python3 -m uvicorn server:app --reload --port 8000
+        ;;
+    update)
+        if [ -d ".git" ]; then
+            echo "🔄 Updating..."
+            git pull origin main && echo "✅ Updated to latest!" || echo "⚠️ Already up to date"
+        else
+            echo "⚠️ Not a git repository"
+        fi
+        ;;
+    -h|--help|help)
+        echo "MAP-MINER CLI"
+        echo ""
+        echo "Usage: mapminer [command]"
+        echo ""
+        echo "Commands:"
+        echo "  install     Install dependencies (run once)"
+        echo "  start       Start the server (default)"
+        echo "  update      Pull latest updates from git"
+        echo "  -h, help    Show this help message"
+        ;;
+    *)
+        echo "Unknown command: $1"
+        echo "Run './mapminer -h' for usage"
+        ;;
+esac

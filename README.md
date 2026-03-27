@@ -21,24 +21,37 @@ irm https://raw.githubusercontent.com/shayan-human/MAP-MINER/main/install.ps1 | 
 ### Manual Install
 ```bash
 git clone https://github.com/shayan-human/MAP-MINER.git
-cd MAP-MINER/turbo
-pip install -r requirements.txt
+cd MAP-MINER
+./mapminer install
+```
+
+### Global Install (optional)
+```bash
+# Run with --global to use 'mapminer' from anywhere
+curl -sL https://raw.githubusercontent.com/shayan-human/MAP-MINER/main/install.sh | bash -s -- --global
 ```
 
 ---
 
-## Quick Start (One Command)
+## Quick Start
 
 ```bash
-./run_map_miner.sh
-```
+# First time: Install dependencies
+./mapminer install
 
-Or manually:
-```bash
-cd turbo && python3 -m venv ../venv && source ../venv/bin/activate && python3 -m uvicorn server:app --reload --port 8000
+# Start the server (auto-updates on each run)
+./mapminer
 ```
 
 Then open **http://localhost:8000** in your browser.
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `./mapminer` | Start server (auto-updates first) |
+| `./mapminer install` | Install dependencies |
+| `./mapminer update` | Pull latest updates |
 
 ---
 

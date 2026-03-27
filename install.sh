@@ -25,4 +25,14 @@ pip install --quiet -r turbo/requirements.txt
 echo "Installing Playwright chromium..."
 playwright install chromium
 
-echo "Installation complete! You can now run the app with ./run_map_miner.sh"
+echo "Installation complete! You can now run the app with ./mapminer"
+
+# Add to PATH for system-wide access (optional)
+if [ "$1" = "--global" ] || [ "$1" = "-g" ]; then
+    if [ -w /usr/local/bin ]; then
+        ln -sf "$(pwd)/mapminer" /usr/local/bin/mapminer
+        echo "✅ Added 'mapminer' command globally! Run 'mapminer' from anywhere."
+    else
+        echo "⚠️ Need sudo for global install. Run: sudo ln -sf $(pwd)/mapminer /usr/local/bin/mapminer"
+    fi
+fi
