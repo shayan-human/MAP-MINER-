@@ -176,7 +176,7 @@ async def scrape_gmaps(query, depth=2, max_results=50, proxy_string=None, is_sub
             print("  [V2] Browser initialized.")
         except Exception as e:
             if strict_mode and proxy_config:
-                raise Exception(f"❌ STRICT MODE: Proxy failed - {e}. Stopping to protect your IP. Use a working proxy or disable strict mode.")
+                raise Exception(f"❌ Strict Mode: Proxy failed - {e}. Please provide a working proxy or disable Strict Mode.")
             elif proxy_config:
                 print(f"  [!] Proxy failed: {e}. Falling back to LOCAL IP...")
                 browser = await p.chromium.launch(headless=True)

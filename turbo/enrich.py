@@ -216,7 +216,25 @@ async def enrich_business(business_data, proxies=None, limit=0, strict_mode=Fals
     
     # Strict Mode Check - Must have proxy
     if strict_mode and not proxy:
-        raise Exception("❌ STRICT MODE: No proxy available. Stopping to protect your IP. Provide a proxy or disable strict mode.")
+        raise Exception("❌ Strict Mode: No proxy provided. Please provide a working proxy or disable Strict Mode.")
+    
+    # Strict Mode: Test proxy first before using
+    proxy_tested = False
+    if proxy:
+        try:
+            test_client = httpx.AsyncClient(proxy=proxy, timeout=8.0, verify=False)
+            test_resp = await test_client.get("https://api.ipify.org", timeout=8.0)
+            await test_client.aclose()
+            if test_resp.status_code != 200:
+                if strict_mode:
+                    raise Exception("❌ Strict Mode: Proxy test failed. Proxy is not working. Please provide a working proxy or disable Strict Mode.")
+                proxy = None  # Fallback to local IP if not strict mode
+            else:
+                proxy_tested = True
+        except Exception as e:
+            if strict_mode:
+                raise Exception(f"❌ Strict Mode: Proxy not working ({str(e)}). Please provide a working proxy or disable Strict Mode.")
+            proxy = None  # Fallback to local IP if not strict mode
 
     async with httpx.AsyncClient(
         headers={"User-Agent": get_random_ua()},
