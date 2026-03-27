@@ -10,30 +10,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css?v=1.3">
-    <script>
-        // Session Check
-        fetch('/api/auth/me')
-            .then(res => {
-                if (!res.ok) window.location.href = '/';
-                return res.json();
-            })
-            .then(data => {
-                if (data.user) {
-                    const nameEl = document.querySelector('.user-name');
-                    const avatarEl = document.querySelector('.user-avatar');
-                    if (nameEl) nameEl.textContent = data.user.name || data.user.email;
-                    if (avatarEl && data.user.name) avatarEl.textContent = data.user.name.split(' ').map(n => n[0]).join('').toUpperCase();
-                }
-            })
-            .catch(() => window.location.href = '/');
-    </script>
 </head>
 
 <body class="dark">
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <div class="brand-icon"><img src="/static/logo.png" alt="Map Miner" style="width: 100%; height: 100%; object-fit: contain;"></div>
+            <div class="brand-icon"><svg viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"
+                        fill="white" />
+                </svg></div>
             <h2>Map Miner</h2>
             <div class="powered-by">Powered by SHAYAN ALAM</div>
         </div>
@@ -84,10 +71,6 @@
                     <div class="user-role">Admin</div>
                 </div>
             </div>
-            <a href="/api/auth/logout" class="nav-item" style="margin-top: 10px; border-top: 1px solid var(--border); padding-top: 15px; color: var(--text-muted);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Logout
-            </a>
         </div>
     </aside>
 
@@ -193,9 +176,12 @@
                                     </div>
                                 </div>
                                 <!-- Strict Mode - Always visible, outside Advanced toggle -->
-                                <div class="require-proxy-toggle" style="margin-top: 15px; display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(220, 53, 69, 0.1); border-radius: 8px; border: 1px solid rgba(220, 53, 69, 0.3);">
-                                        <input type="checkbox" id="require-proxy-extraction">
-                                    <span id="require-proxy-extraction-label" style="font-size: 0.8rem; color: #6c757d; font-weight: 500;">🔒 Require Proxy - Scraping will only work with valid proxy</span>
+                                <div class="strict-mode-toggle" style="margin-top: 15px; display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(220, 53, 69, 0.1); border-radius: 8px; border: 1px solid rgba(220, 53, 69, 0.3);">
+                                    <label class="switch" style="transform: scale(0.85);">
+                                        <input type="checkbox" id="strict-mode-extraction">
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span id="strict-mode-extraction-label" style="font-size: 0.8rem; color: #6c757d; font-weight: 500;">🔒 Strict Mode - Stop if proxy fails (protect your IP)</span>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group-inline"><label>Max Results</label>
@@ -490,12 +476,12 @@
                                 </select>
                                 <span style="font-size: 0.7rem; color: var(--text-muted);">Select protocol</span>
                             </div>
-                            <div class="require-proxy-toggle" style="margin-top: 15px; display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(220, 53, 69, 0.1); border-radius: 8px; border: 1px solid rgba(220, 53, 69, 0.3);">
+                            <div class="strict-mode-toggle" style="margin-top: 15px; display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(220, 53, 69, 0.1); border-radius: 8px; border: 1px solid rgba(220, 53, 69, 0.3);">
                                 <label class="switch" style="transform: scale(0.85);">
-                                    <input type="checkbox" id="require-proxy-enrich">
+                                    <input type="checkbox" id="strict-mode-enrich">
                                     <span class="slider"></span>
                                 </label>
-                                <span id="require-proxy-enrich-label" style="font-size: 0.8rem; color: #6c757d; font-weight: 500;">🔒 Require Proxy - Enrichment will only work with valid proxy</span>
+                                <span id="strict-mode-enrich-label" style="font-size: 0.8rem; color: #6c757d; font-weight: 500;">🔒 Strict Mode - Stop if proxy fails (protect your IP)</span>
                             </div>
                             
                             <div class="form-actions" style="margin-top: 2rem;">

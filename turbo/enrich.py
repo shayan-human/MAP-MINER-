@@ -171,21 +171,23 @@ async def _extract_all_emails_from_html(html):
     return emails
 
 
-async def enrich_business(business_data, proxies=None, limit=0, require_proxy=False):
+async def enrich_business(business_data, proxies=None, limit=0, strict_mode=False):
     """
     Takes business data with a website and tries to find emails.
     Now uses multiple extraction methods and ALWAYS checks contact pages.
     :param limit: If > 0, stops after finding this many unique emails.
-    :param require_proxy: If True, proxy must work or will fail to protect user IP.
+    :param strict_mode: If True, fails without proxy to protect user IP.
     """
     website = business_data.get('website')
+    # Check if empty or NaN (pandas reads empty cells as float NaN)
     if not website or not isinstance(website, str):
         if 'emails' not in business_data:
             business_data['emails'] = []
-        if require_proxy:
+        if strict_mode:
             business_data['ip_address'] = "BLOCKED - No website"
         return business_data
 
+    # Ensure website has protocol
     if not website.startswith(('http://', 'https://')):
         website = 'https://' + website
 
@@ -195,14 +197,17 @@ async def enrich_business(business_data, proxies=None, limit=0, require_proxy=Fa
     def is_limit_reached():
         return limit > 0 and len(emails) >= limit
 
+    # Random delay for stealth
     await asyncio.sleep(random.uniform(0.3, 1.5))
 
+    # Setup proxy
     proxy = None
     if proxies:
         proxy = random.choice(proxies)
     
-    if require_proxy and not proxy:
-        raise Exception("❌ REQUIRE PROXY: No proxy available. Stopping to protect your IP.")
+    # Strict Mode Check - Must have proxy
+    if strict_mode and not proxy:
+        raise Exception("❌ STRICT MODE: No proxy available. Stopping to protect your IP. Provide a proxy or disable strict mode.")
 
     async with httpx.AsyncClient(
         headers={"User-Agent": get_random_ua()},

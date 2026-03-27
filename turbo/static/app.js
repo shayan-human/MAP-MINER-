@@ -105,28 +105,28 @@ advancedToggle.addEventListener('change', () => {
     proxyContent.classList.toggle('show', advancedToggle.checked);
 });
 
-// === Require Proxy Toggle - Extraction ===
-const requireProxyExtraction = document.getElementById('require-proxy-extraction');
-const requireProxyExtractionLabel = document.getElementById('require-proxy-extraction-label');
-if (requireProxyExtraction) {
-    requireProxyExtraction.addEventListener('change', function() {
+// === Strict Mode Toggle - Extraction ===
+const strictModeExtraction = document.getElementById('strict-mode-extraction');
+const strictModeExtractionLabel = document.getElementById('strict-mode-extraction-label');
+if (strictModeExtraction) {
+    strictModeExtraction.addEventListener('change', function() {
         const slider = this.nextElementSibling;
-        slider.classList.toggle('require-active', this.checked);
-        if (requireProxyExtractionLabel) {
-            requireProxyExtractionLabel.style.color = this.checked ? '#dc3545' : '#6c757d';
+        slider.classList.toggle('strict-active', this.checked);
+        if (strictModeExtractionLabel) {
+            strictModeExtractionLabel.style.color = this.checked ? '#dc3545' : '#6c757d';
         }
     });
 }
 
-// === Require Proxy Toggle - Enrichment ===
-const requireProxyEnrich = document.getElementById('require-proxy-enrich');
-const requireProxyEnrichLabel = document.getElementById('require-proxy-enrich-label');
-if (requireProxyEnrich) {
-    requireProxyEnrich.addEventListener('change', function() {
+// === Strict Mode Toggle - Enrichment ===
+const strictModeEnrich = document.getElementById('strict-mode-enrich');
+const strictModeEnrichLabel = document.getElementById('strict-mode-enrich-label');
+if (strictModeEnrich) {
+    strictModeEnrich.addEventListener('change', function() {
         const slider = this.nextElementSibling;
-        slider.classList.toggle('require-active', this.checked);
-        if (requireProxyEnrichLabel) {
-            requireProxyEnrichLabel.style.color = this.checked ? '#dc3545' : '#6c757d';
+        slider.classList.toggle('strict-active', this.checked);
+        if (strictModeEnrichLabel) {
+            strictModeEnrichLabel.style.color = this.checked ? '#dc3545' : '#6c757d';
         }
     });
 }
@@ -275,7 +275,7 @@ form.addEventListener('submit', async (e) => {
     }).join('\n');
     const extractAll = document.getElementById('extract_all').checked;
     const emailLimit = extractAll ? 0 : 1;
-    const requireProxy = document.getElementById('require-proxy-extraction').checked;
+    const strictMode = document.getElementById('strict-mode-extraction').checked;
 
     if (isBulkMode) {
         const rawLocations = bulkLocationsArea.value.split('\n').map(l => l.trim()).filter(l => l);
@@ -289,7 +289,7 @@ form.addEventListener('submit', async (e) => {
         statusCard.style.display = 'block';
         batchProgressContainer.style.display = 'block';
         
-        processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, requireProxy);
+        processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, strictMode);
     } else {
         const location = locationInput.value;
         if (!location) return alert('Please enter a location');
@@ -301,7 +301,7 @@ form.addEventListener('submit', async (e) => {
         fd.append('concurrency', concurrency);
         fd.append('proxies', proxies);
         fd.append('email_limit', emailLimit);
-        fd.append('require_proxy', requireProxy);
+        fd.append('strict_mode', strictMode);
 
         formCard.style.display = 'none';
         statusCard.style.display = 'block';
@@ -335,7 +335,7 @@ async function startSingleScrape(formData) {
     }
 }
 
-async function processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, requireProxy) {
+async function processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, strictMode) {
     if (batchQueue.length === 0) {
         statusText.innerText = 'All Batches Complete';
         statusSub.innerText = `Processed ${batchTotal} locations sequentially.`;
@@ -346,6 +346,7 @@ async function processNextBatchItem(niche, maxResults, concurrency, proxies, ema
     const currentLocation = batchQueue.shift();
     batchCurrent++;
     
+    // Update batch UI
     batchProgressText.innerText = `ZIP ${batchCurrent} of ${batchTotal}: ${currentLocation}`;
     batchProgressBar.style.width = `${(batchCurrent / batchTotal) * 100}%`;
     
@@ -356,7 +357,7 @@ async function processNextBatchItem(niche, maxResults, concurrency, proxies, ema
     fd.append('concurrency', concurrency);
     fd.append('proxies', proxies);
     fd.append('email_limit', emailLimit);
-    fd.append('require_proxy', requireProxy);
+    fd.append('strict_mode', strictMode);
 
     statusText.innerText = `Initializing Batch: ${currentLocation}`;
     statusSub.innerText = `Sequential task ${batchCurrent}/${batchTotal}`;
@@ -389,8 +390,9 @@ async function processNextBatchItem(niche, maxResults, concurrency, proxies, ema
 
                     if (statusData.status === 'Complete' || statusData.status.startsWith('Error') || statusData.status.startsWith('No')) {
                         clearInterval(intv);
+                        // Move to next batch after a short delay
                         setTimeout(() => {
-                            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, requireProxy);
+                            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, strictMode);
                         }, 2000);
                     }
                 } catch (e) { /* retry */ }
@@ -401,7 +403,7 @@ async function processNextBatchItem(niche, maxResults, concurrency, proxies, ema
     } catch (err) {
         statusText.innerText = `Batch Error: ${currentLocation}`;
         setTimeout(() => {
-            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, requireProxy);
+            processNextBatchItem(niche, maxResults, concurrency, proxies, emailLimit, strictMode);
         }, 3000);
     }
 }
@@ -850,9 +852,9 @@ async function handleEnricherFile(file) {
         formData.append('proxies', formattedProxies);
     }
 
-    // Add require proxy
-    const requireProxyEnrich = document.getElementById('require-proxy-enrich').checked;
-    formData.append('require_proxy', requireProxyEnrich);
+    // Add strict mode
+    const strictModeEnrich = document.getElementById('strict-mode-enrich').checked;
+    formData.append('strict_mode', strictModeEnrich);
 
     // Hide results, show progress
     if (enricherResults) enricherResults.style.display = 'none';

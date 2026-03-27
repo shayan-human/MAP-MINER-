@@ -17,71 +17,42 @@ import pandas as pd
 REPO_URL = "https://github.com/shayan-human/MAP-MINER-TEMP.git"
 LOCAL_VERSION_FILE = os.path.join(os.path.dirname(__file__), ".version")
 
-# Detect Vercel Environment
-IS_VERCEL = os.environ.get("VERCEL") == "1"
-
-if not IS_VERCEL:
-    def check_and_update():
-        try:
-            current_hash = subprocess.run(
-                ["git", "rev-parse", "HEAD"], 
+def check_and_update():
+    try:
+        current_hash = subprocess.run(
+            ["git", "rev-parse", "HEAD"], 
+            capture_output=True, text=True, cwd=os.path.dirname(__file__)
+        ).stdout.strip()
+        
+        stored_hash = ""
+        if os.path.exists(LOCAL_VERSION_FILE):
+            with open(LOCAL_VERSION_FILE, "r") as f:
+                stored_hash = f.read().strip()
+        
+        if stored_hash != current_hash:
+            result = subprocess.run(
+                ["git", "pull", "origin", "main"],
                 capture_output=True, text=True, cwd=os.path.dirname(__file__)
-            ).stdout.strip()
-            
-            stored_hash = ""
-            if os.path.exists(LOCAL_VERSION_FILE):
-                with open(LOCAL_VERSION_FILE, "r") as f:
-                    stored_hash = f.read().strip()
-            
-            if stored_hash != current_hash:
-                result = subprocess.run(
-                    ["git", "pull", "origin", "main"],
-                    capture_output=True, text=True, cwd=os.path.dirname(__file__)
-                )
-                if result.returncode == 0:
-                    with open(LOCAL_VERSION_FILE, "w") as f:
-                        f.write(current_hash)
-                    print(f"MAP-MINER: Updated to {current_hash[:8]}")
-                    return True
-            return False
-        except Exception:
-            return False
+            )
+            if result.returncode == 0:
+                with open(LOCAL_VERSION_FILE, "w") as f:
+                    f.write(current_hash)
+                print(f"MAP-MINER: Updated to {current_hash[:8]}")
+                return True
+        return False
+    except Exception:
+        return False
 
-    # check_and_update() # Disabled for now to speed up dev
-
-from starlette.middleware.sessions import SessionMiddleware
-from authlib.integrations.starlette_client import OAuth
+check_and_update()
 
 app = FastAPI(title="Map Miner Dashboard")
 
-# Session & OAuth Setup
-SECRET_KEY = os.environ.get("SESSION_SECRET", "super-secret-key-replace-me")
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
-
-oauth = OAuth()
-oauth.register(
-    name='google',
-    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
-    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'}
-)
-
 # Setup directories
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
-
-if IS_VERCEL:
-    # Use /tmp for writable storage on Vercel
-    BASE_DIR = "/tmp"
-    OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-else:
-    # Local environment
-    OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
-    os.makedirs(STATIC_DIR, exist_ok=True)
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
 HISTORY_FILE = os.path.join(OUTPUT_DIR, "history.json")
+os.makedirs(STATIC_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Initialize Database
 db = LeadDB(os.path.join(OUTPUT_DIR, "leads.db"))
@@ -102,44 +73,6 @@ def save_history(history):
     with open(HISTORY_FILE, 'w') as f:
         json.dump(history, f, indent=2)
 
-from fastapi import Depends, HTTPException
-
-# --- AUTH DEPENDENCY ---
-def get_current_user(request: Request):
-    user = request.session.get('user')
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return user
-
-# --- AUTH ROUTES ---
-@app.get("/api/auth/login")
-async def login(request: Request):
-    redirect_uri = request.url_for('auth_callback')
-    if "vercel.app" in str(request.base_url):
-        redirect_uri = str(redirect_uri).replace("http://", "https://")
-    return await oauth.google.authorize_redirect(request, redirect_uri)
-
-@app.get("/api/auth/callback")
-async def auth_callback(request: Request):
-    token = await oauth.google.authorize_access_token(request)
-    user = token.get('userinfo')
-    if user:
-        request.session['user'] = dict(user)
-    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
-
-@app.get("/api/auth/logout")
-async def logout(request: Request):
-    request.session.pop('user', None)
-    return JSONResponse({"status": "ok", "message": "Logged out"})
-
-@app.get("/api/auth/me")
-async def get_me(request: Request):
-    user = request.session.get('user')
-    if not user:
-        return JSONResponse({"authenticated": False}, status_code=401)
-    return {"authenticated": True, "user": user}
-
-# --- EXISTING API ROUTES ---
 @app.post("/api/scrape")
 async def start_scrape(
     background_tasks: BackgroundTasks,
@@ -150,30 +83,9 @@ async def start_scrape(
     concurrency: int = Form(5),
     proxies: str = Form(None),
     email_limit: int = Form(0),
-    require_proxy: bool = Form(False),
-    user: dict = Depends(get_current_user)
+    strict_mode: bool = Form(False)
 ):
     job_id = str(uuid.uuid4())
-    
-    if require_proxy and not proxies:
-        return JSONResponse({"error": "Proxy is required when 'Require Proxy' is enabled. Please provide a proxy."}, status_code=400)
-    
-    proxies_list = parse_proxies(proxies) if proxies else []
-    if require_proxy and proxies_list:
-        from turbo.utils import validate_proxies_batch
-        print(f"  [API] Validating {len(proxies_list)} proxy(es) before starting job...")
-        validation_result = await validate_proxies_batch(proxies_list)
-        
-        if not validation_result["working"]:
-            failed = validation_result["failed"]
-            error_details = "; ".join([f"{f['proxy']}: {f['error']}" for f in failed[:3]])
-            return JSONResponse({
-                "error": f"All proxies failed validation. No working proxies available. Details: {error_details}"
-            }, status_code=400)
-        
-        working_proxies = [p["proxy"] for p in validation_result["working"]]
-        proxies = ",".join(working_proxies)
-        print(f"  [API] ✓ {len(working_proxies)} proxy(es) validated successfully")
     
     # Auto-scale depth based on max_results for better coverage
     # 50 results often need 4-5 scrolls to trigger dynamic loading reliably
@@ -187,19 +99,20 @@ async def start_scrape(
         "progress": 0,
         "total": 0,
         "file": None,
-        "require_proxy": require_proxy,
+        "strict_mode": strict_mode,
         "created_at": datetime.datetime.now().isoformat()
     }
     
-    background_tasks.add_task(run_scrape_task, job_id, niche, location, max_results, auto_depth, concurrency, proxies, email_limit, require_proxy)
+    background_tasks.add_task(run_scrape_task, job_id, niche, location, max_results, auto_depth, concurrency, proxies, email_limit, strict_mode)
     return {"job_id": job_id}
 
-async def run_scrape_task(job_id, niche, location, max_results, depth, concurrency, proxy_string, email_limit, require_proxy=False):
+async def run_scrape_task(job_id, niche, location, max_results, depth, concurrency, proxy_string, email_limit, strict_mode=False):
     query = f"{niche} in {location}"
     proxies_list = parse_proxies(proxy_string) if proxy_string else None
     
-    if require_proxy and not proxy_string:
-        jobs[job_id]["status"] = "❌ Require Proxy: No proxy provided."
+    # Strict Mode Check
+    if strict_mode and not proxy_string:
+        jobs[job_id]["status"] = "❌ Strict Mode: No proxy provided. Must use proxy to protect your IP."
         jobs[job_id]["progress"] = 0
         jobs[job_id]["total"] = 0
         return
@@ -241,7 +154,7 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
             pass
 
         jobs[job_id]["status"] = "Searching Google Maps..."
-        businesses, fail_screenshot = await scrape_gmaps(query, depth=depth, max_results=max_results, proxy_string=proxy_string, require_proxy=require_proxy)
+        businesses, fail_screenshot = await scrape_gmaps(query, depth=depth, max_results=max_results, proxy_string=proxy_string, strict_mode=strict_mode)
         
         if not businesses:
             jobs[job_id]["status"] = "No businesses found."
@@ -323,13 +236,15 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
         async def enriched_worker(biz):
             nonlocal progress_count
             async with semaphore:
+                # Always try to enrich if website is present, even duplicates
+                # This ensures we get the latest emails for every search.
                 if biz.get('website'):
-                    res = await enrich_business(biz, proxies=proxies_list, limit=email_limit, require_proxy=require_proxy)
+                    res = await enrich_business(biz, proxies=proxies_list, limit=email_limit, strict_mode=strict_mode)
                 else:
                     res = biz
                     if 'emails' not in res: res['emails'] = []
                     if 'socials' not in res: res['socials'] = ""
-                    if require_proxy:
+                    if strict_mode:
                         res['ip_address'] = "BLOCKED - No proxy"
                     else:
                         res['ip_address'] = "N/A"
@@ -413,11 +328,11 @@ async def run_scrape_task(job_id, niche, location, max_results, depth, concurren
         jobs[job_id]["status"] = f"Error: {str(e)}"
 
 @app.get("/api/jobs/{job_id}")
-async def get_job_status(job_id: str, user: dict = Depends(get_current_user)):
+async def get_job_status(job_id: str):
     return jobs.get(job_id, {"error": "Job not found"})
 
 @app.get("/api/download/{filename}")
-async def download_file(filename: str, user: dict = Depends(get_current_user)):
+async def download_file(filename: str):
     filepath = os.path.join(OUTPUT_DIR, filename)
     if os.path.exists(filepath):
         return FileResponse(filepath, filename=filename, media_type='text/csv')
@@ -425,7 +340,7 @@ async def download_file(filename: str, user: dict = Depends(get_current_user)):
 
 # === History API ===
 @app.get("/api/history")
-async def get_history(user: dict = Depends(get_current_user)):
+async def get_history():
     return load_history()
 
 @app.delete("/api/history/{job_id}")
@@ -443,7 +358,7 @@ async def delete_history_item(job_id: str):
 
 # === Datasets API ===
 @app.get("/api/datasets")
-async def get_datasets(user: dict = Depends(get_current_user)):
+async def get_datasets():
     datasets = []
     for f in os.listdir(OUTPUT_DIR):
         if f.endswith('.csv'):
@@ -468,7 +383,7 @@ async def get_datasets(user: dict = Depends(get_current_user)):
     return datasets
 
 @app.delete("/api/datasets/{filename}")
-async def delete_dataset(filename: str, user: dict = Depends(get_current_user)):
+async def delete_dataset(filename: str):
     filepath = os.path.join(OUTPUT_DIR, filename)
     if os.path.exists(filepath):
         os.remove(filepath)
@@ -477,7 +392,7 @@ async def delete_dataset(filename: str, user: dict = Depends(get_current_user)):
 
 # === Proxies API (localStorage-based, but with a save endpoint) ===
 @app.get("/api/proxies")
-async def get_proxies(user: dict = Depends(get_current_user)):
+async def get_proxies():
     proxy_file = os.path.join(OUTPUT_DIR, "proxies.json")
     if os.path.exists(proxy_file):
         try:
@@ -489,7 +404,7 @@ async def get_proxies(user: dict = Depends(get_current_user)):
     return {"proxies": []}
 
 @app.post("/api/proxies")
-async def save_proxies(request: Request, user: dict = Depends(get_current_user)):
+async def save_proxies(request: Request):
     data = await request.json()
     proxy_file = os.path.join(OUTPUT_DIR, "proxies.json")
     with open(proxy_file, 'w') as f:
@@ -501,7 +416,7 @@ class ProxyTestRequest(BaseModel):
     proxy: str
 
 @app.post("/api/test-proxy")
-async def test_proxy(data: ProxyTestRequest, user: dict = Depends(get_current_user)):
+async def test_proxy(data: ProxyTestRequest):
     import httpx
     from turbo.utils import parse_proxies
     
@@ -533,8 +448,7 @@ async def enrich_csv(
     concurrency: int = Form(5),
     proxies: str = Form(None),
     email_limit: int = Form(0),
-    require_proxy: bool = Form(False),
-    user: dict = Depends(get_current_user)
+    strict_mode: bool = Form(False)
 ):
     """Upload a CSV with a 'website' column; enriches each row with scraped emails."""
     try:
@@ -548,18 +462,6 @@ async def enrich_csv(
         if 'website' not in uploaded_df.columns:
             return JSONResponse({"error": "CSV must have a 'website' column"}, status_code=400)
 
-        if require_proxy and not proxies:
-            return JSONResponse({"error": "Proxy is required when 'Require Proxy' is enabled."}, status_code=400)
-
-        proxies_list = parse_proxies(proxies) if proxies else []
-        if require_proxy and proxies_list:
-            from turbo.utils import validate_proxies_batch
-            validation_result = await validate_proxies_batch(proxies_list)
-            if not validation_result["working"]:
-                return JSONResponse({"error": "All proxies failed validation."}, status_code=400)
-            working_proxies = [p["proxy"] for p in validation_result["working"]]
-            proxies = ",".join(working_proxies)
-
         job_id = str(uuid.uuid4())
         jobs[job_id] = {
             "id": job_id,
@@ -568,33 +470,36 @@ async def enrich_csv(
             "progress": 0,
             "total": len(uploaded_df),
             "file": None,
-            "require_proxy": require_proxy,
+            "strict_mode": strict_mode,
             "created_at": datetime.datetime.now().isoformat()
         }
 
+        # Convert df rows to list of dicts
         rows = uploaded_df.to_dict('records')
 
         background_tasks.add_task(
-            run_enrich_csv_task, job_id, rows, concurrency, proxies, email_limit, require_proxy
+            run_enrich_csv_task, job_id, rows, concurrency, proxies, email_limit, strict_mode
         )
         return {"job_id": job_id}
     except Exception as e:
         return JSONResponse({"error": f"Failed to process CSV: {str(e)}"}, status_code=400)
 
 
-async def run_enrich_csv_task(job_id, rows, concurrency, proxy_string, email_limit, require_proxy=False):
+async def run_enrich_csv_task(job_id, rows, concurrency, proxy_string, email_limit, strict_mode=False):
     """Background task: enrich each row with email scraping."""
     try:
         proxies_list = parse_proxies(proxy_string) if proxy_string else None
         
-        if require_proxy and not proxy_string:
-            jobs[job_id]["status"] = "❌ Require Proxy: No proxy provided."
+        # Strict Mode Check
+        if strict_mode and not proxy_string:
+            jobs[job_id]["status"] = "❌ Strict Mode: No proxy provided. Must use proxy to protect your IP."
             jobs[job_id]["progress"] = 0
             jobs[job_id]["total"] = 0
             return
         
         total = len(rows)
         
+        # Calculate how many of the inputted rows are already in our database
         def check_is_duplicate(row):
             email = row.get('emails', '')
             if isinstance(email, list):
@@ -614,13 +519,14 @@ async def run_enrich_csv_task(job_id, rows, concurrency, proxy_string, email_lim
             nonlocal progress_count
             async with semaphore:
                 website = row.get('website')
+                # Skip if not a string (handles NaN) or empty
                 if isinstance(website, str) and website.strip():
-                    res = await enrich_business(row, proxies=proxies_list, limit=email_limit, require_proxy=require_proxy)
+                    res = await enrich_business(row, proxies=proxies_list, limit=email_limit, strict_mode=strict_mode)
                 else:
                     res = row
                     if 'emails' not in res:
                         res['emails'] = []
-                    if require_proxy:
+                    if strict_mode:
                         res['ip_address'] = "BLOCKED - No website"
 
                 enriched_rows.append(res)
@@ -666,7 +572,7 @@ async def run_enrich_csv_task(job_id, rows, concurrency, proxy_string, email_lim
 
 
 @app.post("/api/refine")
-async def refine_leads(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+async def refine_leads(file: UploadFile = File(...)):
     try:
         # 1. Load the uploaded file
         contents = await file.read()
@@ -712,38 +618,13 @@ async def refine_leads(file: UploadFile = File(...), user: dict = Depends(get_cu
     except Exception as e:
         return {"status": "error", "message": f"Refinement failed: {str(e)}"}
 
-# Serve Landing Page at Root
+# Serve Frontend
 @app.get("/")
-async def read_root_index():
-    # Use parent directory for the landing page index.html
-    root_index = os.path.join(os.path.dirname(os.path.dirname(__file__)), "index.html")
-    if os.path.exists(root_index):
-        return FileResponse(root_index)
-    return JSONResponse({"error": "Landing page index.html not found at root"})
-
-# Serve Dashboard
-@app.get("/dashboard")
-@app.get("/app-dashboard")
-async def read_dashboard_index():
+async def read_index():
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
-    return JSONResponse({"error": "Dashboard front-end not found. Check turbo/static/index.html"})
-
-# Serve Login/Signup
-@app.get("/login")
-async def read_login_page():
-    login_path = os.path.join(STATIC_DIR, "login.html")
-    if os.path.exists(login_path):
-        return FileResponse(login_path)
-    return RedirectResponse(url="/api/auth/login")
-
-@app.get("/signup")
-async def read_signup_page():
-    signup_path = os.path.join(STATIC_DIR, "signup.html")
-    if os.path.exists(signup_path):
-        return FileResponse(signup_path)
-    return RedirectResponse(url="/api/auth/login")
+    return JSONResponse({"error": "Frontend not built yet. Check turbo/static/"})
 
 if __name__ == "__main__":
     import uvicorn

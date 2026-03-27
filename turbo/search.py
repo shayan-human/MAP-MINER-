@@ -86,42 +86,17 @@ async def extract_details(context, lead, idx, total, results_list, lock):
     finally:
         await page.close()
 
-async def scrape_gmaps(query, depth=2, max_results=50, proxy_string=None, is_subsearch=False, require_proxy=False):
+async def scrape_gmaps(query, depth=2, max_results=50, proxy_string=None, is_subsearch=False, strict_mode=False):
     """
     [ENGINE-V2.0] High-Robustness Maps Scraper
-    require_proxy: If True, proxy MUST work or scraping will be blocked
     """
-    from turbo.utils import get_random_ua, ProxyManager, validate_proxies_batch
+    from turbo.utils import get_random_ua, ProxyManager
     
     print(f"\n[ENGINE-V2.0] STARTING SEARCH: {query}")
     print(f"[ENGINE-V2.0] Target: {max_results} leads, Depth: {depth}")
-    print(f"[ENGINE-V2.0] Require Proxy: {require_proxy}")
+    print(f"[ENGINE-V2.0] Strict Mode: {strict_mode}")
 
-    proxies_list = parse_proxies(proxy_string) if proxy_string else []
-    
-    if require_proxy and proxies_list:
-        print(f"  [V2] Validating {len(proxies_list)} proxy(es)...")
-        validation_result = await validate_proxies_batch(proxies_list)
-        
-        working_proxies = validation_result["working"]
-        failed_proxies = validation_result["failed"]
-        
-        if failed_proxies:
-            print(f"  [!] {len(failed_proxies)} proxy(es) failed validation:")
-            for f in failed_proxies[:3]:
-                print(f"      - {f['proxy']}: {f['error']}")
-        
-        if not working_proxies:
-            raise Exception(f"❌ PROXY VALIDATION FAILED: All {len(proxies_list)} proxies are invalid. Scraping blocked to protect your IP.")
-        
-        print(f"  [V2] ✓ {len(working_proxies)} proxy(es) validated successfully")
-        working_proxy_strings = [p["proxy"] for p in working_proxies]
-        pm = ProxyManager(working_proxy_strings)
-        proxies_list = working_proxy_strings
-    elif proxy_string:
-        pm = ProxyManager(proxies_list)
-    else:
-        pm = None
+    pm = ProxyManager(parse_proxies(proxy_string)) if proxy_string else None
     
     async with async_playwright() as p:
         proxy_config = pm.get_playwright_proxy() if pm else None
@@ -131,8 +106,11 @@ async def scrape_gmaps(query, depth=2, max_results=50, proxy_string=None, is_sub
             browser = await p.chromium.launch(headless=True, proxy=proxy_config)
             print("  [V2] Browser initialized.")
         except Exception as e:
-            if require_proxy and proxy_config:
-                raise Exception(f"❌ PROXY FAILED during browser launch - {e}. Stopping to protect your IP.")
+            if strict_mode and proxy_config:
+                raise Exception(f"❌ STRICT MODE: Proxy failed - {e}. Stopping to protect your IP. Use a working proxy or disable strict mode.")
+            elif proxy_config:
+                print(f"  [!] Proxy failed: {e}. Falling back to LOCAL IP...")
+                browser = await p.chromium.launch(headless=True)
             else:
                 raise e
 
