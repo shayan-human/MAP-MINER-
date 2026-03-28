@@ -43,7 +43,28 @@ def run_server():
     python = get_venv_python()
     os.execv(str(python), [str(python), "-m", "uvicorn", "turbo.server:app", "--reload", "--port", "8000"])
 
+def check_for_updates():
+    """Attempt to pull the latest changes from Git before running."""
+    print("Checking for updates...")
+    git_dir = SCRIPT_DIR / ".git"
+    if not git_dir.exists():
+        return
+        
+    try:
+        # We use git fetch followed by git pull --ff-only to be safe
+        # timeout=10 to prevent hanging on network issues
+        subprocess.run(
+            ["git", "pull", "--ff-only"], 
+            capture_output=True, text=True, cwd=SCRIPT_DIR, timeout=10
+        )
+        print("Done! Application is up to date.")
+    except subprocess.TimeoutExpired:
+        print("Warning: Update check timed out. Proceeding with current version.")
+    except Exception as e:
+        print(f"Warning: Could not check for updates ({e}). Proceeding with current version.")
+
 def main():
+    check_for_updates()
     if not VENV_DIR.exists():
         create_venv()
     
