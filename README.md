@@ -12,7 +12,7 @@ git clone https://github.com/shayan-human/MAP-MINER.git
 cd MAP-MINER
 
 # Run (auto-creates venv & installs deps)
-python run.py
+python3 run.py
 ```
 
 Then open **http://localhost:8000**
@@ -26,7 +26,7 @@ git clone https://github.com/shayan-human/MAP-MINER.git
 cd MAP-MINER
 
 # Create venv
-python -m venv venv
+python3 -m venv venv
 
 # Activate (Linux/Mac)
 source venv/bin/activate
@@ -37,10 +37,10 @@ venv\Scripts\activate
 # Install deps
 pip install -r turbo/requirements.txt
 pip install playwright
-python -m playwright install chromium
+python3 -m playwright install chromium
 
 # Run
-python run.py
+python3 run.py
 ```
 
 ---
