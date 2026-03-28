@@ -45,3 +45,4 @@ turbo/.version
 venv/
 .venv/
 env/
+.last_install
