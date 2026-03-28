@@ -55,16 +55,6 @@ The application will:
 
 ---
 
-## 📸 Screenshots
-
-### Search Configuration
-Configure your target niche, location, and proxy settings in one clean interface.
-
-### Live Statistics
-Track total leads, emails found, and duplicates in real-time as the extractor runs.
-
----
-
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
