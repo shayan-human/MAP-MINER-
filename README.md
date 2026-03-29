@@ -13,43 +13,59 @@
 
 ## 🚀 Key Features
 
-- **⚡ High-Speed Extraction**: Multithreaded scraping using Playwright.
+- **⚡ High-Accuracy Engine**: Reverted to our most stable searching logic for maximum regional accuracy (Commit `30178f6`).
 - **🛡️ Proxy Rotation**: Integrated support for HTTP/Socks proxies with "Strict Mode" protection.
+- **⚡ High-Speed Extraction**: Multithreaded scraping using Playwright.
 - **📱 PWA Supported**: Install the dashboard as a standalone app on your desktop or mobile.
 - **🎨 Premium UI**: Modern dark mode interface with real-time statistics and glassmorphic design.
-- **🔄 Auto-Updates**: Stays up-to-date with the latest features automatically on every launch.
-- **📊 Data Management**: Export leads to CSV/Excel, track history, and manage datasets.
+- **🔄 Auto-Updates**: Stays up-to-date with the latest features automatically using a secure hash-check system.
 
 ---
 
 ## 🛠️ Installation & Setup
 
-### 1. Simple Installation (Recommended)
-This is the professional way to install Map Miner. It sets up the **global command**, creates the virtual environment, and installs all system drivers automatically.
+### 1. Professional Installation
+This sets up the **global command**, creates the virtual environment, and installs all system drivers automatically.
 
 ```bash
-git clone https://github.com/shayan-human/MAP-MINER.git ~/mapminer
-cd ~/mapminer && bash install.sh
+git clone https://github.com/shayan-human/MAP-MINER.git
+cd MAP-MINER && bash install.sh
 ```
 > [!NOTE]
-> This step requires `sudo` privileges to create the global shortcut and install browser dependencies.
+> This step requires `sudo` privileges to create the global shortcut (`mapminer`) and install browser dependencies.
 
 ---
 
-## 🏃 Quick Start
+## 🏃 Usage
 
-Once the installer is finished, you can launch the dashboard from **ANY** terminal window and **ANY** folder by just typing:
+Launch the dashboard from **ANY** terminal window and **ANY** folder by just typing:
 
 ```bash
 mapminer
 ```
 
-### Advanced Usage
-- **Force Re-Setup**: If you ever need to refresh your dependencies or fix an installation, run:
+### 💡 Tips & Flags
+- **Force Re-Setup**: If you ever need to refresh your dependencies:
   ```bash
   mapminer --setup
   ```
-- **Auto-Updates**: Every time you launch with `mapminer`, the tool automatically checks for new code on GitHub. If updates are found, it pulls them and restarts itself instantly!
+- **Skip Updates**: If you're on a slow connection and want to skip the update check:
+  ```bash
+  mapminer --no-update
+  ```
+
+---
+
+## 🩹 Troubleshooting
+
+### Infinite Update Loop
+If you ever find yourself in an infinite update loop (common after a `force push` to the main repository), run this cure:
+
+```bash
+cd /path/to/your/MAP-MINER
+git fetch origin
+git reset --hard origin/main
+```
 
 ---
 
