@@ -659,6 +659,10 @@ async def refine_leads(file: UploadFile = File(...)):
     except Exception as e:
         return {"status": "error", "message": f"Refinement failed: {str(e)}"}
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(os.path.join(STATIC_DIR, "favicon.ico"))
+
 # Serve Frontend
 @app.get("/")
 async def read_index():
