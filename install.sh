@@ -21,5 +21,21 @@ pip install -r turbo/requirements.txt
 pip install playwright
 python -m playwright install chromium
 
+# --- SYMLINK SETUP (Professional CLI) ---
+echo "Installing global 'mapminer' command..."
+chmod +x "$HOME/mapminer/mapminer"
+chmod +x "$HOME/mapminer/run_map_miner.sh"
+
+# Create symlink in /usr/local/bin (requires sudo)
+if [ ! -L "/usr/local/bin/mapminer" ]; then
+    echo "This step requires sudo to create a global shortcut in /usr/local/bin."
+    sudo ln -sf "$HOME/mapminer/mapminer" /usr/local/bin/mapminer
+    echo "✓ Global command 'mapminer' installed to /usr/local/bin"
+else
+    echo "✓ Global command 'mapminer' already exists."
+fi
+
+
 echo ""
-echo "✅ DONE! Run: cd ~/mapminer && ./mapminer"
+echo "✅ DONE! Map Miner is now installed globally."
+echo "🚀 You can now run the scraper from ANY folder by typing: mapminer"

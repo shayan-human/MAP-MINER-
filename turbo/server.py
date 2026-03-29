@@ -1,4 +1,9 @@
 import os
+import sys
+
+# Failsafe: Ensure project root is in PYTHONPATH regardless of how script is launched
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import re
 import asyncio
 import uuid
