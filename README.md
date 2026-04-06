@@ -31,6 +31,8 @@ This sets up the **global command** (`mapminer`), creates the virtual environmen
 
 ```bash
 cd ~
+sudo rm /usr/local/bin/mapminer
+rm -rf mapminer
 git clone https://github.com/shayan-human/MAP-MINER.git mapminer
 cd mapminer && bash install.sh
 ```
@@ -82,11 +84,12 @@ Then open http://localhost:8000
 ## 🩹 Troubleshooting
 
 ### Broken mapminer Command
-If you see error like `can't open file '/usr/local/bin/run.py'`, the old symlink is broken. Fix:
+If you see error like `can't open file '/usr/local/bin/run.py'`, fix by removing old folder and reinstalling:
 
 ```bash
-sudo rm /usr/local/bin/mapminer
 cd ~
+sudo rm /usr/local/bin/mapminer
+rm -rf mapminer
 git clone https://github.com/shayan-human/MAP-MINER.git mapminer
 cd mapminer && bash install.sh
 ```
