@@ -25,11 +25,14 @@
 ## 🛠️ Installation & Setup
 
 ### Linux/Mac (Professional Installation)
-This sets up the **global command**, creates the virtual environment, and installs all system drivers automatically.
+This sets up the **global command** (`mapminer`), creates the virtual environment, and installs all system drivers automatically.
+
+> ⚠️ **IMPORTANT**: Clone to `~/mapminer` folder (NOT `~/MAP-MINER`) for the global command to work.
 
 ```bash
-git clone https://github.com/shayan-human/MAP-MINER.git
-cd MAP-MINER && bash install.sh
+cd ~
+git clone https://github.com/shayan-human/MAP-MINER.git mapminer
+cd mapminer && bash install.sh
 ```
 > [!NOTE]
 > This step requires `sudo` privileges to create the global shortcut (`mapminer`) and install browser dependencies.
@@ -78,11 +81,23 @@ Then open http://localhost:8000
 
 ## 🩹 Troubleshooting
 
+### Broken mapminer Command
+If you see error like `can't open file '/usr/local/bin/run.py'`, the old symlink is broken. Fix:
+
+```bash
+sudo rm /usr/local/bin/mapminer
+cd ~
+git clone https://github.com/shayan-human/MAP-MINER.git mapminer
+cd mapminer && bash install.sh
+```
+
+Then use `mapminer` from anywhere.
+
 ### Infinite Update Loop
 If you ever find yourself in an infinite update loop (common after a `force push` to the main repository), run this cure:
 
 ```bash
-cd /path/to/your/MAP-MINER
+cd ~/mapminer
 git fetch origin
 git reset --hard origin/main
 ```
