@@ -61,6 +61,23 @@ python run.py
 
 Then open http://localhost:8000
 
+---
+
+### Docker (All Platforms)
+
+Best for **no setup required** - works on Windows, Mac, and Linux with Docker.
+
+#### Installation & Run
+```bash
+git clone https://github.com/shayan-human/MAP-MINER.git
+cd MAP-MINER
+docker-compose up --build
+```
+
+Then open http://localhost:8000
+
+> ⚠️ **Requires**: [Docker Desktop](https://www.docker.com/products/docker-desktop) installed
+
 ### 💡 Tips & Flags
 - **Force Re-Setup** (Linux/Mac):
   ```bash
