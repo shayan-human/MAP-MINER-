@@ -42,9 +42,15 @@ mapminer
 ---
 
 ### Windows (Quick Start)
+
+#### Installation
 ```bash
 git clone https://github.com/shayan-human/MAP-MINER.git
 cd MAP-MINER
+```
+
+#### Run
+```bash
 python run.py
 ```
 
