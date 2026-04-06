@@ -52,9 +52,10 @@ This 1 command will:
 
 ## 💡 Tips & Flags
 
-- **Force Re-Setup**:
+- **Rebuild after fixes** (if you get errors):
   ```bash
   docker-compose build --no-cache
+  docker-compose up
   ```
 - **Stop Container**:
   ```bash
@@ -69,6 +70,13 @@ This 1 command will:
 
 ## 🩹 Troubleshooting
 
+### Browser/Chromium Errors
+If you get errors like `libXfixes.so.3` or `Browser has been closed`:
+```bash
+docker-compose build --no-cache
+docker-compose up
+```
+
 ### Docker not working
 - Make sure Docker Desktop is running
 - On Windows, enable WSL2 in Docker Desktop settings
@@ -78,6 +86,12 @@ Change port in `docker-compose.yml`:
 ```yaml
 ports:
   - "8001:8000"
+```
+
+### Container keeps restarting
+Check logs:
+```bash
+docker-compose logs
 ```
 
 ---

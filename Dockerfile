@@ -2,10 +2,11 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies for Playwright (Chromium)
+# Install ALL system dependencies for Playwright (Chromium)
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
+    # Core NSS libraries
     libnss3 \
     libnspr4 \
     libatk1.0-0 \
@@ -13,11 +14,28 @@ RUN apt-get update && apt-get install -y \
     libcups2 \
     libdrm2 \
     libxkbcommon0 \
+    # X11 libraries (fixes libXfixes.so.3 error)
+    libxfixes3 \
+    libx11-6 \
+    libxcb1 \
+    libx11-xcb1 \
     libxcomposite1 \
-    libxdamage1 \
+    libxcursor1 \
+    libxi6 \
+    libxtst6 \
     libxrandr2 \
+    # Graphics/Rendering
+    libpango-1.0-0 \
+    libcairo2 \
     libgbm1 \
+    # Fonts
+    libfontconfig1 \
+    libfreetype6 \
+    # Audio
     libasound2 \
+    # Additional for stability
+    libatspi2.0-0 \
+    libdbus-1-3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (for caching)
